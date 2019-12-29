@@ -10,8 +10,8 @@ reqwest = "^0.10"
 log = "^0.4"
 
 [dev-dependencies]
-tokio-test = "*"
-mockall = "*"
+tokio-test = "^0.2"
+mockall = "^0.6"
 
 
 [patch.crates-io]
