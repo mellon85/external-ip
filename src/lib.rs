@@ -2,6 +2,6 @@
 mod consensus;
 mod sources;
 
-pub use consensus::{Consensus, ConsensusBuilder, Sources};
-pub use sources::{get_dns_sources, get_http_sources, get_sources, DNSSource, HTTPSource, Source};
+pub use consensus::*;
+pub use sources::*;
 

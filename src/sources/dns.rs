@@ -3,7 +3,7 @@ use std::net::IpAddr;
 use log::trace;
 
 #[derive(Debug, Clone)]
-enum QueryType {
+pub enum QueryType {
     TXT,
     A,
 }

@@ -2,7 +2,7 @@ mod dns;
 mod http;
 mod interfaces;
 
-pub use self::dns::{get_dns_sources, DNSSource};
+pub use self::dns::{get_dns_sources, DNSSource, QueryType};
 pub use self::http::{get_http_sources, HTTPSource};
 pub use interfaces::*;
 
