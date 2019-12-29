@@ -3,6 +3,12 @@ name = "external-ip"
 version = "0.1.0"
 authors = ["Dario Meloni <mellon85@gmail.com>"]
 edition = "2018"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/mellon85/external-ip"
+description = """
+Asynchronous library to retrieve the system external IP
+"""
 
 [dependencies]
 futures = "^0.3"
