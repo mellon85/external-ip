@@ -7,6 +7,7 @@ use std::pin::Pin;
 pub enum Error {
     Http(reqwest::Error),
     InvalidAddress(std::net::AddrParseError),
+    Dns(c_ares_resolver::Error),
     DnsResolutionEmpty,
 }
 

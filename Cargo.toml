@@ -14,6 +14,7 @@ Asynchronous library to retrieve the system external IP
 futures = "^0.3"
 reqwest = "^0.10"
 log = "^0.4"
+c-ares-resolver = "^7"
 
 [dev-dependencies]
 tokio-test = "^0.2"
