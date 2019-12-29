@@ -7,7 +7,17 @@ use log::trace;
 /// without any additional processing (if not trimming the string).
 #[derive(Debug, Clone)]
 pub struct HTTPSource {
-    pub url: String,
+    url: String,
+}
+
+impl HTTPSource {
+    fn source<S: Into<String>>(
+        url: S,
+    ) -> Box<dyn Source> {
+        Box::new(HTTPSource {
+            url: url.into(),
+        })
+    }
 }
 
 impl Source for HTTPSource {
@@ -53,11 +63,7 @@ where
         "https://myip.dnsomatic.com/",
         "https://diagnostic.opendns.com/myip",
     ]
-    .iter()
-    .map(|addr| {
-        Box::new(HTTPSource {
-            url: addr.to_string(),
-        }) as Box<dyn Source>
-    })
+    .into_iter()
+    .map(|x| HTTPSource::source(*x))
     .collect()
 }
