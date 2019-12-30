@@ -13,6 +13,25 @@ pub enum Error {
     DnsResolutionEmpty,
 }
 
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Error {:?}", self)
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Error::Http(e) => Some(e),
+            Error::HttpInvalidUri(e) => Some(e),
+            Error::DecodeError(e) => Some(e),
+            Error::InvalidAddress(e) => Some(e),
+            Error::Dns(e) => Some(e),
+            Error::DnsResolutionEmpty => None,
+        }
+    }
+}
+
 impl From<hyper::error::Error> for Error {
     fn from(err: hyper::error::Error) -> Error {
         Error::Http(err)
