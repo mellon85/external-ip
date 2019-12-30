@@ -5,7 +5,9 @@ use std::pin::Pin;
 
 #[derive(Debug)]
 pub enum Error {
-    Http(reqwest::Error),
+    Http(hyper::error::Error),
+    HttpInvalidUri(http::uri::InvalidUri),
+    DecodeError(std::str::Utf8Error),
     InvalidAddress(std::net::AddrParseError),
     Dns(c_ares_resolver::Error),
     DnsResolutionEmpty,

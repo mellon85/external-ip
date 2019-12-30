@@ -12,14 +12,12 @@ Asynchronous library to retrieve the system external IP
 
 [dependencies]
 futures = "^0.3"
-reqwest = "^0.10"
+hyper-tls = "^0.4"
+hyper = "^0.13"
+http = "^0.2"
 log = "^0.4"
 c-ares-resolver = "^7"
 
 [dev-dependencies]
 tokio-test = "^0.2"
 mockall = "^0.6"
-
-
-[patch.crates-io]
-reqwest = {git="https://github.com/seanmonstar/reqwest", rev="3b80c06"}

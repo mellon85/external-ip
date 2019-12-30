@@ -13,7 +13,6 @@ fn http_get_ip() {
     assert_ne!(value, None);
 }
 
-
 #[test]
 #[should_panic]
 fn requires_tokio() {

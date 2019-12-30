@@ -64,7 +64,7 @@ impl Consensus {
                 Err(err) => {
                     eprintln!("Source {} failed {:?}", self.voters[pos], err);
                     error!("Source {} failed {:?}", self.voters[pos], err)
-                },
+                }
             };
         }
 

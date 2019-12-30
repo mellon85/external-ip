@@ -17,7 +17,7 @@ Three functions provides sets of known working sources.
 
 # Runtime
 
-It requires to run with Tokio runtime due to the depenency on reqwest if you use the HTTP resolver.
+It requires to run with Tokio runtime due to the depenency on hyper if you use the HTTP resolver.
 The DNS resolver can work with other executors at the moment. (tested with futures)
 
 # Extend

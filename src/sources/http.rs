@@ -1,6 +1,10 @@
 use crate::sources::interfaces::{Error, IpFuture, IpResult, Source};
 use log::trace;
 
+use hyper::body::HttpBody;
+use hyper::Client;
+use hyper_tls::HttpsConnector;
+
 /// HTTP(s) Source of the external ip
 ///
 /// It expects a URL to contact to retrive in the content of the message the IP
@@ -11,12 +15,8 @@ pub struct HTTPSource {
 }
 
 impl HTTPSource {
-    fn source<S: Into<String>>(
-        url: S,
-    ) -> Box<dyn Source> {
-        Box::new(HTTPSource {
-            url: url.into(),
-        })
+    fn source<S: Into<String>>(url: S) -> Box<dyn Source> {
+        Box::new(HTTPSource { url: url.into() })
     }
 }
 
@@ -24,12 +24,26 @@ impl Source for HTTPSource {
     fn get_ip<'a>(&'a self) -> IpFuture<'a> {
         async fn run(_self: &HTTPSource) -> IpResult {
             trace!("Contacting {:?}", _self.url);
-            let req = reqwest::get(_self.url.as_str())
+
+            let https = HttpsConnector::new();
+            let client = Client::builder().build::<_, hyper::Body>(https);
+
+            let mut res = client
+                .get(_self.url.parse().map_err(Error::HttpInvalidUri)?)
                 .await
                 .map_err(Error::Http)?;
-            trace!("Result for {:?}: {:?}", _self.url, req);
-            let data = req.text().await.map_err(Error::Http)?;
-            Ok(data.trim().parse().map_err(Error::InvalidAddress)?)
+            trace!("Result for {:?}: {:?}", _self.url, res);
+
+            let mut message = vec![];
+            while let Some(chunk) = res.body_mut().data().await {
+                message.extend(chunk.map_err(Error::Http)?);
+            }
+
+            Ok(std::str::from_utf8(&message)
+                .map_err(Error::DecodeError)?
+                .trim()
+                .parse()
+                .map_err(Error::InvalidAddress)?)
         };
 
         Box::pin(run(self))

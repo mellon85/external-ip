@@ -1,6 +1,6 @@
 use crate::sources::interfaces::{Error, IpFuture, IpResult, Source};
-use std::net::IpAddr;
 use log::trace;
+use std::net::IpAddr;
 
 #[derive(Debug, Clone)]
 pub enum QueryType {
@@ -45,7 +45,10 @@ impl std::fmt::Display for DNSSource {
 }
 
 /// Used internally to resolve the IP of the target DNS servers
-async fn resolve_server(ares: &c_ares_resolver::FutureResolver, server: &str) -> Result<String, Error> {
+async fn resolve_server(
+    ares: &c_ares_resolver::FutureResolver,
+    server: &str,
+) -> Result<String, Error> {
     for query in ares
         .query_a(server.into())
         .await
