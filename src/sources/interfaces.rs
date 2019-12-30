@@ -13,6 +13,36 @@ pub enum Error {
     DnsResolutionEmpty,
 }
 
+impl From<hyper::error::Error> for Error {
+    fn from(err: hyper::error::Error) -> Error {
+        Error::Http(err)
+    }
+}
+
+impl From<http::uri::InvalidUri> for Error {
+    fn from(err: http::uri::InvalidUri) -> Error {
+        Error::HttpInvalidUri(err)
+    }
+}
+
+impl From<std::str::Utf8Error> for Error {
+    fn from(err: std::str::Utf8Error) -> Error {
+        Error::DecodeError(err)
+    }
+}
+
+impl From<std::net::AddrParseError> for Error {
+    fn from(err: std::net::AddrParseError) -> Error {
+        Error::InvalidAddress(err)
+    }
+}
+
+impl From<c_ares_resolver::Error> for Error {
+    fn from(err: c_ares_resolver::Error) -> Error {
+        Error::Dns(err)
+    }
+}
+
 pub type IpResult = Result<IpAddr, Error>;
 pub type IpFuture<'a> = Pin<Box<dyn Future<Output = IpResult> + Send + 'a>>;
 

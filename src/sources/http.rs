@@ -1,4 +1,4 @@
-use crate::sources::interfaces::{Error, IpFuture, IpResult, Source};
+use crate::sources::interfaces::{IpFuture, IpResult, Source};
 use log::trace;
 
 use hyper::body::HttpBody;
@@ -28,22 +28,15 @@ impl Source for HTTPSource {
             let https = HttpsConnector::new();
             let client = Client::builder().build::<_, hyper::Body>(https);
 
-            let mut res = client
-                .get(_self.url.parse().map_err(Error::HttpInvalidUri)?)
-                .await
-                .map_err(Error::Http)?;
+            let mut res = client.get(_self.url.parse()?).await?;
             trace!("Result for {:?}: {:?}", _self.url, res);
 
             let mut message = vec![];
             while let Some(chunk) = res.body_mut().data().await {
-                message.extend(chunk.map_err(Error::Http)?);
+                message.extend(chunk?);
             }
 
-            Ok(std::str::from_utf8(&message)
-                .map_err(Error::DecodeError)?
-                .trim()
-                .parse()
-                .map_err(Error::InvalidAddress)?)
+            Ok(std::str::from_utf8(&message)?.trim().parse()?)
         };
 
         Box::pin(run(self))

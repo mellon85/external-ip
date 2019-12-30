@@ -64,7 +64,7 @@ impl Source for DNSSource {
     fn get_ip<'a>(&'a self) -> IpFuture<'a> {
         async fn run(_self: &DNSSource) -> IpResult {
             trace!("Contacting {} for {}", _self.server, _self.record);
-            let ares = c_ares_resolver::FutureResolver::new().map_err(Error::Dns)?;
+            let ares = c_ares_resolver::FutureResolver::new()?;
 
             // Resolve DNS Server name
             let server = resolve_server(&ares, &_self.server).await?;
@@ -86,7 +86,7 @@ impl Source for DNSSource {
                         if data.is_err() {
                             continue;
                         }
-                        return Ok(data.unwrap().parse().map_err(Error::InvalidAddress)?);
+                        return Ok(data.unwrap().parse()?);
                     }
                 }
                 QueryType::A => {
