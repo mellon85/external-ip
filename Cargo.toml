@@ -11,17 +11,17 @@ Asynchronous library to retrieve the system external IP
 """
 
 [dependencies]
-futures = "^0.3"
-hyper-tls = "^0.4"
-hyper = "^0.13"
-http = "^0.2"
-log = "^0.4"
-c-ares-resolver = "^7"
-igd = {version="^0.9", optional=true}
+futures = "0.3"
+hyper-tls = "0.4"
+hyper = "0.13"
+http = "0.2"
+log = "0.4"
+c-ares-resolver = "7"
+igd = {version="0.9", optional=true}
 
 [dev-dependencies]
-tokio-test = "^0.2"
-mockall = "^0.6"
+tokio-test = "0.2"
+mockall = "0.6"
 
 [features]
 default = ["discover_igd"]
