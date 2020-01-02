@@ -1,5 +1,7 @@
 # external-ip
 
+[![Build Status](https://travis-ci.com/mellon85/external-ip.svg?branch=master)](https://travis-ci.com/mellon85/external-ip) 
+
 Finds the current external IP address contacting http and dns external
 services.
 
