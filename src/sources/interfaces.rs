@@ -11,6 +11,11 @@ pub enum Error {
     InvalidAddress(std::net::AddrParseError),
     Dns(c_ares_resolver::Error),
     DnsResolutionEmpty,
+
+    #[cfg(feature = "igd")]
+    IgdExternalIp(igd::GetExternalIpError),
+    #[cfg(feature = "igd")]
+    IgdSearch(igd::SearchError),
 }
 
 impl std::fmt::Display for Error {
@@ -28,6 +33,10 @@ impl std::error::Error for Error {
             Error::InvalidAddress(e) => Some(e),
             Error::Dns(e) => Some(e),
             Error::DnsResolutionEmpty => None,
+            #[cfg(feature = "igd")]
+            Error::IgdExternalIp(e) => Some(e),
+            #[cfg(feature = "igd")]
+            Error::IgdSearch(e) => Some(e),
         }
     }
 }
@@ -59,6 +68,20 @@ impl From<std::net::AddrParseError> for Error {
 impl From<c_ares_resolver::Error> for Error {
     fn from(err: c_ares_resolver::Error) -> Error {
         Error::Dns(err)
+    }
+}
+
+#[cfg(feature = "igd")]
+impl From<igd::GetExternalIpError> for Error {
+    fn from(err: igd::GetExternalIpError) -> Error {
+        Error::IgdExternalIp(err)
+    }
+}
+
+#[cfg(feature = "igd")]
+impl From<igd::SearchError> for Error {
+    fn from(err: igd::SearchError) -> Error {
+        Error::IgdSearch(err)
     }
 }
 

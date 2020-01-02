@@ -15,6 +15,10 @@ Three functions provides sets of known working sources.
 * get_sources
   Returns all sources combined
 
+Additionally a single igd source can be instantiated if the feature is enabled
+("discover_igd"), to retrive the IP from an home router.
+If the feature is enabled get_sources will return it as a source too.
+
 # Runtime
 
 It requires to run with Tokio runtime due to the depenency on hyper if you use the HTTP resolver.
