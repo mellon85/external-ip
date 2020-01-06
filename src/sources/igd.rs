@@ -41,10 +41,8 @@ impl Source for IGD {
     }
 }
 
-type ThreadOutput = Mutex<IpResult>;
-
 struct IGDFuture {
-    rx: mpsc::Receiver<ThreadOutput>,
+    rx: mpsc::Receiver<IpResult>,
     waker: Arc<Mutex<Option<Waker>>>,
 }
 
@@ -55,7 +53,7 @@ impl std::fmt::Display for IGD {
 }
 
 impl IGDFuture {
-    pub fn run(&self, tx: mpsc::Sender<ThreadOutput>) {
+    pub fn run(&self, tx: mpsc::Sender<IpResult>) {
         let waker = self.waker.clone();
         thread::spawn(move || {
             trace!("IGD Future thread started");
@@ -67,7 +65,7 @@ impl IGDFuture {
 
             let result = inner();
             log::debug!("IGD task completed: {:?}", result);
-            let r = tx.send(ThreadOutput::from(result));
+            let r = tx.send(IpResult::from(result));
             log::debug!("Send result: {:?}", r);
 
             if let Some(waker) = waker.lock().unwrap().take() {
@@ -88,7 +86,7 @@ impl std::future::Future for IGDFuture {
                 *waker = Some(cx.waker().clone());
                 Poll::Pending
             }
-            Ok(x) => Poll::Ready(x.into_inner().unwrap()),
+            Ok(x) => Poll::Ready(x),
         }
     }
 }
