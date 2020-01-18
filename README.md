@@ -33,12 +33,21 @@ Source interface is implemented and it's passed as a boxed trait object.
 
 # Example
 
+For ease of use a single async function is enough to obtain the IP trying with
+all the default sources enabled
+
+```rust
+  let result = external_ip::get_ip();
+  let value : Option<IpAddr> = block_on(result);
+```
+
+This is the same as doing
+
 ```rust
   let sources: external_ip::Sources = external_ip::get_sources();
   let consensus = external_ip::ConsensusBuilder::new()
       .add_sources(sources)
       .build();
   let result = consensus.get_consensus();
-  let value = block_on(result);
-  assert_ne!(value, None);
+  let value : Option<IpAddr>  = block_on(result);
 ```

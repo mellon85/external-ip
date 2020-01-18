@@ -61,9 +61,7 @@ impl Consensus {
                         .and_modify(|c| *c += 1)
                         .or_insert(1);
                 }
-                Err(err) => {
-                    error!("Source {} failed {:?}", self.voters[pos], err)
-                }
+                Err(err) => error!("Source {} failed {:?}", self.voters[pos], err),
             };
         }
 
