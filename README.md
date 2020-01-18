@@ -5,7 +5,7 @@
 Finds the current external IP address contacting http and dns external
 services.
 
-If at least one of the sources replies the reply with the highest occourrences
+If at least one of the sources replies the reply with the highest occurrences
 will be reported as the IP address.
 
 Three functions provides sets of known working sources.
@@ -18,12 +18,12 @@ Three functions provides sets of known working sources.
   Returns all sources combined
 
 Additionally a single igd source can be instantiated if the feature is enabled
-("discover_igd"), to retrive the IP from an home router.
+("discover_igd"), to retrieve the IP from an home router.
 If the feature is enabled get_sources will return it as a source too.
 
 # Runtime
 
-It requires to run with Tokio runtime due to the depenency on hyper if you use the HTTP resolver.
+It requires to run with Tokio runtime due to the dependency on hyper if you use the HTTP resolver.
 The DNS resolver can work with other executors at the moment. (tested with futures)
 
 # Extend
