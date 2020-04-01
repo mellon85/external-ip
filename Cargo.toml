@@ -1,6 +1,6 @@
 [package]
 name = "external-ip"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Dario Meloni <mellon85@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -21,7 +21,7 @@ igd = {version="0.10", optional=true}
 
 [dev-dependencies]
 tokio-test = "0.2"
-mockall = "0.6"
+mockall = "0.7"
 
 [features]
 default = ["discover_igd"]
