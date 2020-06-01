@@ -70,7 +70,7 @@ where
         "https://myip.dnsomatic.com/",
         "https://diagnostic.opendns.com/myip",
     ]
-    .into_iter()
+    .iter()
     .map(|x| HTTPSource::source(*x))
     .collect()
 }
