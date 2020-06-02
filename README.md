@@ -51,3 +51,10 @@ This is the same as doing
   let result = consensus.get_consensus();
   let value : Option<IpAddr>  = block_on(result);
 ```
+
+# Changelog
+
+## v2
+
+- Based on trust dns instead of c-ares. Now requires less external dependencies (only ssl at the moment)
+
