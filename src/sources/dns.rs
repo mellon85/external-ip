@@ -1,6 +1,9 @@
 use crate::sources::interfaces::{Error, IpFuture, IpResult, Source};
 use log::trace;
-use std::net::IpAddr;
+use std::net::SocketAddr;
+
+use trust_dns_resolver::config::*;
+use trust_dns_resolver::TokioAsyncResolver;
 
 #[derive(Debug, Clone)]
 pub enum QueryType {
@@ -15,19 +18,19 @@ pub enum QueryType {
 /// A few services are known for replying with the IP of the query sender.
 #[derive(Debug, Clone)]
 pub struct DNSSource {
-    server: String,
+    server: Option<String>, // if not present use the system DNS
     record_type: QueryType,
     record: String,
 }
 
 impl DNSSource {
-    fn source<S: Into<String>, R: Into<String>>(
-        server: S,
+    fn source<R: Into<String>>(
+        server: Option<String>,
         record_type: QueryType,
         record: R,
     ) -> Box<dyn Source> {
         Box::new(DNSSource {
-            server: server.into(),
+            server: server,
             record_type: record_type,
             record: record.into(),
         })
@@ -38,65 +41,67 @@ impl std::fmt::Display for DNSSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "DnsSource: {} {:?} {}",
+            "DnsSource: {:?} {:?} {}",
             self.server, self.record_type, self.record
         )
     }
 }
 
-/// Used internally to resolve the IP of the target DNS servers
-async fn resolve_server(
-    ares: &c_ares_resolver::FutureResolver,
-    server: &str,
-) -> Result<String, Error> {
-    for query in ares
-        .query_a(server.into())
-        .await
-        .map_err(|x| Error::Dns(c_ares_resolver::Error::Ares(x)))?
-        .iter()
-    {
-        return Ok(query.ipv4().to_string());
+impl DNSSource {
+    async fn get_resolver(self: &DNSSource) -> Result<TokioAsyncResolver, Error> {
+        let resolver =
+            TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default()).await?;
+
+        if let Some(server) = &self.server {
+            let response = resolver.lookup_ip(server.as_str()).await;
+            match response.iter().next() {
+                None => return Err(Error::DnsResolutionEmpty),
+                Some(lookup) => {
+                    let ip = lookup.iter().next();
+                    match ip {
+                        None => return Err(Error::DnsResolutionEmpty),
+                        Some(found_ip) => {
+                            let mut config = ResolverConfig::new();
+                            let address = SocketAddr::new(found_ip, 53);
+                            trace!("DNS address {}", address);
+                            config.add_name_server(NameServerConfig {
+                                socket_addr: address,
+                                protocol: trust_dns_resolver::config::Protocol::Udp,
+                                tls_dns_name: Some(server.clone()),
+                            });
+                            return Ok(
+                                TokioAsyncResolver::tokio(config, ResolverOpts::default()).await?
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        Ok(resolver)
     }
-    Err(Error::DnsResolutionEmpty)
 }
 
 impl Source for DNSSource {
     fn get_ip<'a>(&'a self) -> IpFuture<'a> {
         async fn run(_self: &DNSSource) -> IpResult {
-            trace!("Contacting {} for {}", _self.server, _self.record);
-            let ares = c_ares_resolver::FutureResolver::new()?;
-
-            // Resolve DNS Server name
-            let server = resolve_server(&ares, &_self.server).await?;
-            trace!("DNS IP {}", server);
-
-            let ares = ares
-                .set_servers(&[&server])
-                .map_err(|x| Error::Dns(c_ares_resolver::Error::Ares(x)))?;
+            trace!("Contacting {:?} for {}", _self.server, _self.record);
+            let resolver = _self.get_resolver().await?;
 
             match _self.record_type {
                 QueryType::TXT => {
-                    for query in ares
-                        .query_txt(&_self.record)
-                        .await
-                        .map_err(|x| Error::Dns(c_ares_resolver::Error::Ares(x)))?
-                        .iter()
-                    {
-                        let data = std::str::from_utf8(query.text());
-                        if data.is_err() {
-                            continue;
+                    for reply in resolver.txt_lookup(_self.record.clone()).await?.iter() {
+                        for txt in reply.txt_data().iter() {
+                            let data = std::str::from_utf8(txt);
+                            if data.is_err() {
+                                continue;
+                            }
+                            return Ok(data.unwrap().parse()?);
                         }
-                        return Ok(data.unwrap().parse()?);
                     }
                 }
                 QueryType::A => {
-                    for query in ares
-                        .query_a(&_self.record)
-                        .await
-                        .map_err(|x| Error::Dns(c_ares_resolver::Error::Ares(x)))?
-                        .iter()
-                    {
-                        return Ok(IpAddr::V4(query.ipv4()));
+                    for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
+                        return Ok(reply);
                     }
                 }
             }
@@ -116,11 +121,15 @@ where
     T: std::iter::FromIterator<Box<dyn Source>>,
 {
     vec![
-        DNSSource::source("resolver1.opendns.com", QueryType::A, "myip.opendns.com"),
-        DNSSource::source("ns1.google.com", QueryType::TXT, "o-o.myaddr.l.google.com"),
-        DNSSource::source("ns2.google.com", QueryType::TXT, "o-o.myaddr.l.google.com"),
-        DNSSource::source("ns3.google.com", QueryType::TXT, "o-o.myaddr.l.google.com"),
-        DNSSource::source("ns4.google.com", QueryType::TXT, "o-o.myaddr.l.google.com"),
+        DNSSource::source(
+            Some(String::from("resolver1.opendns.com")),
+            QueryType::A,
+            "myip.opendns.com",
+        ),
+        DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
+        DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
+        DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
+        DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
     ]
     .into_iter()
     .collect()

@@ -16,7 +16,7 @@ hyper-tls = "0.4"
 hyper = "0.13"
 http = "0.2"
 log = "0.4"
-c-ares-resolver = "7"
+trust-dns-resolver = "0.19"
 igd = {version="0.11", optional=true}
 
 [dev-dependencies]

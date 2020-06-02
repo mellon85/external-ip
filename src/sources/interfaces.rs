@@ -9,7 +9,7 @@ pub enum Error {
     HttpInvalidUri(http::uri::InvalidUri),
     DecodeError(std::str::Utf8Error),
     InvalidAddress(std::net::AddrParseError),
-    Dns(c_ares_resolver::Error),
+    Dns(trust_dns_resolver::error::ResolveError),
     DnsResolutionEmpty,
 
     #[cfg(feature = "igd")]
@@ -65,8 +65,8 @@ impl From<std::net::AddrParseError> for Error {
     }
 }
 
-impl From<c_ares_resolver::Error> for Error {
-    fn from(err: c_ares_resolver::Error) -> Error {
+impl From<trust_dns_resolver::error::ResolveError> for Error {
+    fn from(err: trust_dns_resolver::error::ResolveError) -> Error {
         Error::Dns(err)
     }
 }

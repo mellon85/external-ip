@@ -11,8 +11,6 @@ use std::net::IpAddr;
 /// sources enabled.
 pub async fn get_ip() -> Option<IpAddr> {
     let sources: Sources = get_sources();
-    let consensus = ConsensusBuilder::new()
-      .add_sources(sources)
-      .build();
+    let consensus = ConsensusBuilder::new().add_sources(sources).build();
     consensus.get_consensus().await
 }
