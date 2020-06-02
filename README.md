@@ -10,16 +10,16 @@ will be reported as the IP address.
 
 Three functions provides sets of known working sources.
 
-* get_http_sources
+* `get_http_sources`
   Returns all known http sources
-* get_dns_sources
+* `get_dns_sources`
   Returns all known dns sources
-* get_sources
+* `get_sources`
   Returns all sources combined
 
 Additionally a single igd source can be instantiated if the feature is enabled
-("discover_igd"), to retrieve the IP from an home router.
-If the feature is enabled get_sources will return it as a source too.
+(`discover_igd`), to retrieve the IP from an home router.
+If the feature is enabled `get_sources` will return it as a source too.
 
 # Runtime
 
