@@ -12,10 +12,3 @@ jobs:
 cache: cargo
 before_cache:
   - rm -rf "$TRAVIS_HOME/.cargo/registry/src"
-deploy:
-  provider: cargo
-  on:
-    tags: true
-    branch: master
-  token:
-    secure: v/HvUC5QpyWBgU5fglmUueE20qqYZ4EI7uZA2CAa73guguOEY5bkRsxdh7us3pswLsyjK4gs4VxBBijUqpnjWkJe0vR8i4GmxGkK1tpgSx8fe/YgnFwExGVZp+PWXeiOsXWaytKE6u7854S2RWswnsoDQDTMn0cF8knOjJ/7qTIq8Bj8H/fnUikzInL8RqLVKZbaHCoWDgW0dq/YYX1Atm16tumQittIMu+Nqaic10ANMzbN62iIOsab5HoWbHVjJuxbu+KkVV6CDaMgCTUQcAg1SSQFI56n6O6zfMC+jkay5ctrpt/Vnq4yGj2LJtlprXUPLvK1LSSCkP1/22sH6VbYA97SwNw/8XR6d3kS40wRzBZ/HL1iodGyP479lKIGqAmDkHHiz0DidOuGW9HDOp8Uhkue41wnQX59ub7x0mFMOT/Q86WgNEoGC+cyEmS+BmMQmgHBSp/kYb/83Tfn7jYfDCDDATtUxWWrNwK1gjJJVVkaZny4dy8SuGDLw6mipMFvXC4Wvz9llg1C/hdNx/gsBp8XoZ+lUBacBrt9KIa8uDn/aB++sFhVBbCoBL4jJr9UzLNvttqO6XuNyF5MMIf3VGXLyC8EsBQh+EAQOGpDjvWg3DlqBFkUct8KYmnJAGU+6/gssUIY+BBhBup2Lo/DADzWAEE+NyMLw6nBHNs=
