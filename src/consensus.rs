@@ -28,7 +28,7 @@ pub enum Policy {
 
 impl Default for Policy {
     fn default() -> Self {
-        Policy::All
+        Policy::Random
     }
 }
 
@@ -186,9 +186,10 @@ mod tests {
     }
 
     #[test]
-    fn test_success_multiple_same() {
+    fn test_all_success_multiple_same() {
         let consensus = ConsensusBuilder::new()
             .add_sources(vec![make_success(IP0), make_success(IP0)])
+            .policy(Policy::All)
             .build();
 
         let result = consensus.get_consensus();
@@ -242,6 +243,7 @@ mod tests {
         let result = ConsensusBuilder::new()
             .add_sources(vec![make_fail()])
             .add_sources(vec![make_success(IP0)])
+            .policy(Policy::All)
             .build()
             .get_consensus();
         let value = block_on(result);
