@@ -5,23 +5,51 @@ use std::collections::HashMap;
 use std::net::IpAddr;
 use std::option::Option;
 use std::vec::Vec;
+use rand::seq::SliceRandom;
 
 /// Type alias for easier usage of the library
 pub type Sources = Vec<Box<dyn sources::Source>>;
 
-/// Consensus system that aggregates the various sources of information and returns the most common reply
+use std::default::Default;
+
+/// Policies for Consensus resolution
+pub enum Policy {
+    /// Requires all sources to be queried, it will ignore the sources returning errors but and it
+    /// will return the IP with the most replies as the result.
+    All,
+    /// Will test the sources one by one in order until there's one success and will return it as
+    /// the result.
+    First,
+    /// Will test the sources one by one in random order until there's one success and will return
+    /// it as the result.
+    Random,
+}
+
+impl Default for Policy {
+    fn default() -> Self {
+        Policy::All
+    }
+}
+
+/// Consensus system that aggregates the various sources of information and returns the most common
+/// reply
 pub struct Consensus {
     voters: Sources,
+    policy: Policy,
 }
 
 /// Consensus builder
 pub struct ConsensusBuilder {
     voters: Sources,
+    policy: Policy,
 }
 
 impl ConsensusBuilder {
     pub fn new() -> ConsensusBuilder {
-        ConsensusBuilder { voters: vec![] }
+        ConsensusBuilder {
+            voters: vec![],
+            policy: Policy::default(),
+        }
     }
 
     /// Adds sources to the builder
@@ -40,7 +68,8 @@ impl ConsensusBuilder {
     /// Returns the configured consensus struct from the builder
     pub fn build(&self) -> Consensus {
         Consensus {
-            voters: self.voters.clone(),
+            voters: self.voters,
+            policy: self.policy,
         }
     }
 }
@@ -48,6 +77,14 @@ impl ConsensusBuilder {
 impl Consensus {
     /// Returns the IP address it found or None if no source worked.
     pub async fn get_consensus(self) -> Option<IpAddr> {
+        match self.policy {
+            Policy::All  => self.all().await,
+            Policy::First => self.first().await,
+            Policy::Random => self.random().await,
+        }
+    }
+
+    async fn all(self) -> Option<IpAddr> {
         let results =
             futures::future::join_all(self.voters.iter().map(|voter| voter.get_ip())).await;
 
@@ -70,6 +107,31 @@ impl Consensus {
         debug!("Sorted results {:?}", ordered_output);
 
         ordered_output.pop().map(|x| *x.0)
+    }
+
+    async fn first(self) -> Option<IpAddr> {
+        for voter in self.voters {
+            let result = voter.get_ip().await;
+            debug!("Results {:?}", result);
+            if result.is_ok() {
+                return Some(result.unwrap());
+            }
+        }
+        debug!("Tried all sources");
+        None
+    }
+
+    async fn random(self) -> Option<IpAddr> {
+        let mut rng = rand::thread_rng();
+        for voter in self.voters.choose_multiple(&mut rng, self.voters.len()) {
+            let result = voter.get_ip().await;
+            debug!("Results {:?}", result);
+            if result.is_ok() {
+                return Some(result.unwrap());
+            }
+        }
+        debug!("Tried all sources");
+        None
     }
 }
 
@@ -114,7 +176,9 @@ mod tests {
     #[test]
     fn test_success() {
         let sources: Sources = vec![make_success(IP0)];
-        let consensus = ConsensusBuilder::new().add_sources(sources).build();
+        let consensus = ConsensusBuilder::new()
+            .add_sources(sources)
+            .build();
         let result = consensus.get_consensus();
         let value = block_on(result);
         assert_eq!(Some(IP0), value);
