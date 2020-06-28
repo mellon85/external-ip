@@ -52,6 +52,17 @@ This is the same as doing
   let value : Option<IpAddr>  = block_on(result);
 ```
 
+# Policies
+
+The library supports 3 consensus policies.
+
+- All
+  Query all sources in parallel and return the most common response
+- First
+  Query the sources one by one and return the first success
+- Random
+  Query the sources one by one in random order and return the first success
+
 # Changelog
 
 ## v2
