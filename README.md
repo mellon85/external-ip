@@ -21,6 +21,7 @@ Additionally a single igd source can be instantiated if the feature is enabled
 (`discover_igd`), to retrieve the IP from an home router.
 If the feature is enabled `get_sources` will return it as a source too.
 
+
 # Runtime
 
 It requires to run with Tokio runtime due to the dependency on hyper if you use the HTTP resolver.
@@ -51,6 +52,17 @@ This is the same as doing
   let result = consensus.get_consensus();
   let value : Option<IpAddr>  = block_on(result);
 ```
+
+# Policies
+
+The library supports 3 consensus policies.
+
+- All
+  Query all sources in parallel and return the most common response
+- First
+  Query the sources one by one and return the first success
+- Random
+  Query the sources one by one in random order and return the first success
 
 # Changelog
 
