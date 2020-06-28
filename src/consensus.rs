@@ -57,7 +57,7 @@ impl ConsensusBuilder {
     /// # Arguments
     ///
     /// * `source` - Iterable of sources to add
-    pub fn add_sources<T>(&mut self, source: T) -> &mut ConsensusBuilder
+    pub fn add_sources<T>(mut self, source: T) -> ConsensusBuilder
     where
         T: IntoIterator<Item = Box<dyn sources::Source>>,
     {
@@ -66,7 +66,7 @@ impl ConsensusBuilder {
     }
 
     /// Returns the configured consensus struct from the builder
-    pub fn build(&self) -> Consensus {
+    pub fn build(self) -> Consensus {
         Consensus {
             voters: self.voters,
             policy: self.policy,
@@ -147,28 +147,19 @@ mod tests {
 
     fn make_success(ip: IpAddr) -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
-        mock.expect_box_clone().times(1).returning(move || {
-            let mut clone_mock = MockSource::new();
-            clone_mock
-                .expect_get_ip()
-                .times(1)
-                .returning(move || Box::pin(futures::future::ready(Ok(ip))));
-            Box::new(clone_mock)
-        });
+        mock.expect_get_ip()
+            .times(1)
+            .returning(move || Box::pin(futures::future::ready(Ok(ip))));
         Box::new(mock)
     }
 
     fn make_fail() -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
-        mock.expect_box_clone().times(1).returning(move || {
-            let mut clone_mock = MockSource::new();
-            clone_mock.expect_get_ip().times(1).returning(move || {
-                let invalid_ip: Result<IpAddr, std::net::AddrParseError> = "x.0.0.0".parse();
-                Box::pin(futures::future::ready(Err(sources::Error::InvalidAddress(
-                    invalid_ip.err().unwrap(),
-                ))))
-            });
-            Box::new(clone_mock)
+        mock.expect_get_ip().times(1).returning(move || {
+            let invalid_ip: Result<IpAddr, std::net::AddrParseError> = "x.0.0.0".parse();
+            Box::pin(futures::future::ready(Err(sources::Error::InvalidAddress(
+                invalid_ip.err().unwrap(),
+            ))))
         });
         Box::new(mock)
     }
