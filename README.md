@@ -55,7 +55,7 @@ This is the same as doing
 
 # Policies
 
-The library supports 3 consensus policies.
+The library supports 3 consensus policies. The default policy is Random
 
 - All
   Query all sources in parallel and return the most common response
