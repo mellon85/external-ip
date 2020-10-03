@@ -82,7 +82,7 @@ impl ConsensusBuilder {
 
 impl Consensus {
     /// Returns the IP address it found or None if no source worked.
-    pub async fn get_consensus(self) -> Option<IpAddr> {
+    pub async fn get_consensus(&self) -> Option<IpAddr> {
         match self.policy {
             Policy::All => self.all().await,
             Policy::First => self.first().await,
@@ -90,7 +90,7 @@ impl Consensus {
         }
     }
 
-    async fn all(self) -> Option<IpAddr> {
+    async fn all(&self) -> Option<IpAddr> {
         let results =
             futures::future::join_all(self.voters.iter().map(|voter| voter.get_ip())).await;
 
@@ -115,8 +115,8 @@ impl Consensus {
         ordered_output.pop().map(|x| *x.0)
     }
 
-    async fn first(self) -> Option<IpAddr> {
-        for voter in self.voters {
+    async fn first(&self) -> Option<IpAddr> {
+        for voter in &self.voters {
             let result = voter.get_ip().await;
             debug!("Results {:?}", result);
             if result.is_ok() {
@@ -127,7 +127,7 @@ impl Consensus {
         None
     }
 
-    async fn random(self) -> Option<IpAddr> {
+    async fn random(&self) -> Option<IpAddr> {
         let mut rng = rand::thread_rng();
         for voter in self.voters.choose_multiple(&mut rng, self.voters.len()) {
             let result = voter.get_ip().await;
@@ -216,11 +216,11 @@ mod tests {
 
     #[test]
     fn test_all_success_multiple_with_fails() {
-        let result = ConsensusBuilder::new()
+        let consensus = ConsensusBuilder::new()
             .add_sources(vec![make_success(IP0), make_fail()])
             .policy(Policy::All)
-            .build()
-            .get_consensus();
+            .build();
+        let result = consensus.get_consensus();
         let value = block_on(result);
         assert_eq!(Some(IP0), value);
     }
@@ -228,11 +228,11 @@ mod tests {
     #[test]
     fn test_only_failures() {
         for policy in [Policy::All, Policy::Random, Policy::First].iter() {
-            let result = ConsensusBuilder::new()
+            let consensus = ConsensusBuilder::new()
                 .add_sources(vec![make_fail()])
                 .policy(*policy)
-                .build()
-                .get_consensus();
+                .build();
+            let result = consensus.get_consensus();
             let value = block_on(result);
             assert_eq!(None, value);
         }
@@ -240,34 +240,34 @@ mod tests {
 
     #[test]
     fn test_add_sources_multiple_times() {
-        let result = ConsensusBuilder::new()
+        let consensus = ConsensusBuilder::new()
             .add_sources(vec![make_fail()])
             .add_sources(vec![make_success(IP0)])
             .policy(Policy::All)
-            .build()
-            .get_consensus();
+            .build();
+        let result = consensus.get_consensus();
         let value = block_on(result);
         assert_eq!(Some(IP0), value);
     }
 
     #[test]
     fn test_first_success_multiple_with_fails() {
-        let result = ConsensusBuilder::new()
+        let consensus = ConsensusBuilder::new()
             .add_sources(vec![make_fail(), make_success(IP0)])
             .policy(Policy::First)
-            .build()
-            .get_consensus();
+            .build();
+        let result = consensus.get_consensus();
         let value = block_on(result);
         assert_eq!(Some(IP0), value);
     }
 
     #[test]
     fn test_first_success_with_first_success() {
-        let result = ConsensusBuilder::new()
+        let consensus = ConsensusBuilder::new()
             .add_sources(vec![make_success(IP0), make_untouched()])
             .policy(Policy::First)
-            .build()
-            .get_consensus();
+            .build();
+        let result = consensus.get_consensus();
         let value = block_on(result);
         assert_eq!(Some(IP0), value);
     }
