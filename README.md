@@ -66,7 +66,18 @@ The library supports 3 consensus policies. The default policy is Random
 
 # Changelog
 
+## v1
+
+- Initial release
+
 ## v2
 
 - Based on trust dns instead of c-ares. Now requires less external dependencies (only ssl at the moment)
 
+## v3
+
+- The default policy is now random
+
+## v4
+
+- Consensus is now not consumed when used
