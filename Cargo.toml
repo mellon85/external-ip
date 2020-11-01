@@ -21,7 +21,7 @@ igd = {version="0.11", optional=true}
 rand = "0.7"
 
 [dev-dependencies]
-tokio-test = "0.2"
+tokio-test = "0.3"
 mockall = "0.8"
 
 [features]
