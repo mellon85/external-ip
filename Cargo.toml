@@ -13,7 +13,7 @@ Asynchronous library to retrieve the system external IP
 [dependencies]
 futures = "0.3"
 hyper-tls = "0.4"
-hyper = "0.13"
+hyper = "0.14"
 http = "0.2"
 log = "0.4"
 trust-dns-resolver = "0.19"
