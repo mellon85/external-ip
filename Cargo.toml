@@ -22,7 +22,7 @@ rand = "0.7"
 
 [dev-dependencies]
 tokio-test = "0.2"
-mockall = "0.8"
+mockall = "0.9"
 
 [features]
 default = ["discover_igd"]
