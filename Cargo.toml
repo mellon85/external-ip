@@ -11,18 +11,18 @@ Asynchronous library to retrieve the system external IP
 """
 
 [dependencies]
-futures = "0.3"
-hyper-tls = "0.4"
-hyper = "0.13"
-http = "0.2"
-log = "0.4"
-trust-dns-resolver = "0.19"
-igd = {version="0.11", optional=true}
-rand = "0.7"
+futures = "0.3.9"
+hyper-tls = "0.5.0"
+hyper = {version="0.14.2", features=["client", "http1"]}
+http = "0.2.3"
+log = "0.4.11"
+trust-dns-resolver = {version="0.20.0", features=["tokio-runtime"]}
+igd = { version = "0.12.0", optional = true }
+rand = "0.8.1"
 
 [dev-dependencies]
-tokio-test = "0.2"
-mockall = "0.8"
+tokio-test = "0.4.0"
+mockall = "0.9.0"
 
 [features]
 default = ["discover_igd"]
