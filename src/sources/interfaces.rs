@@ -5,7 +5,7 @@ use std::pin::Pin;
 
 #[derive(Debug)]
 pub enum Error {
-    Http(hyper::error::Error),
+    Http(hyper::Error),
     HttpInvalidUri(http::uri::InvalidUri),
     DecodeError(std::str::Utf8Error),
     InvalidAddress(std::net::AddrParseError),
@@ -41,8 +41,8 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<hyper::error::Error> for Error {
-    fn from(err: hyper::error::Error) -> Error {
+impl From<hyper::Error> for Error {
+    fn from(err: hyper::Error) -> Error {
         Error::Http(err)
     }
 }
