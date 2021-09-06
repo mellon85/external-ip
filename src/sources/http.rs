@@ -66,7 +66,6 @@ where
         "https://checkip.amazonaws.com/",
         "https://ident.me/",
         "http://whatismyip.akamai.com/",
-        "https://tnx.nl/ip",
         "https://myip.dnsomatic.com/",
         "https://diagnostic.opendns.com/myip",
     ]
