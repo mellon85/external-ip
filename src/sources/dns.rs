@@ -1,5 +1,6 @@
 use crate::sources::interfaces::{Error, IpFuture, IpResult, Source};
 use log::trace;
+use std::net::IpAddr;
 use std::net::SocketAddr;
 
 use trust_dns_resolver::config::*;
@@ -9,6 +10,7 @@ use trust_dns_resolver::TokioAsyncResolver;
 pub enum QueryType {
     TXT,
     A,
+    AAAA,
 }
 
 /// DNS Source of the external ip
@@ -71,7 +73,11 @@ impl DNSSource {
                                 tls_dns_name: Some(server.clone()),
                                 trust_negative_responses: true,
                             });
-                            return Ok(TokioAsyncResolver::tokio(config, ResolverOpts::default()));
+                            let resolver_opts = ResolverOpts {
+                                ip_strategy: LookupIpStrategy::Ipv4AndIpv6,
+                                ..ResolverOpts::default()
+                            };
+                            return Ok(TokioAsyncResolver::tokio(config, resolver_opts)?);
                         }
                     }
                 }
@@ -101,7 +107,16 @@ impl Source for DNSSource {
                 }
                 QueryType::A => {
                     for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
-                        return Ok(reply);
+                        if let IpAddr::V4(_) = reply {
+                            return Ok(reply);
+                        }
+                    }
+                }
+                QueryType::AAAA => {
+                    for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
+                        if let IpAddr::V6(_) = reply {
+                            return Ok(reply);
+                        }
                     }
                 }
             }
@@ -124,6 +139,11 @@ where
         DNSSource::source(
             Some(String::from("resolver1.opendns.com")),
             QueryType::A,
+            "myip.opendns.com",
+        ),
+        DNSSource::source(
+            Some(String::from("resolver1.opendns.com")),
+            QueryType::AAAA,
             "myip.opendns.com",
         ),
         DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
