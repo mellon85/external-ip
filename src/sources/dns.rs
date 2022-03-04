@@ -73,11 +73,9 @@ impl DNSSource {
                                 tls_dns_name: Some(server.clone()),
                                 trust_negative_responses: true,
                             });
-                            let resolver_opts = ResolverOpts {
-                                ip_strategy: LookupIpStrategy::Ipv4AndIpv6,
-                                ..ResolverOpts::default()
-                            };
-                            return Ok(TokioAsyncResolver::tokio(config, resolver_opts)?);
+                            let mut resolver_opts = ResolverOpts::default();
+                            resolver_opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
+                            return Ok(TokioAsyncResolver::tokio(config, resolver_opts));
                         }
                     }
                 }
@@ -89,7 +87,7 @@ impl DNSSource {
 
 impl Source for DNSSource {
     fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
-        async fn run(_self: &DNSSource) -> IpResult {
+        async fn run(_self: &DNSSource, family: Family) -> IpResult {
             trace!("Contacting {:?} for {}", _self.server, _self.record);
             let resolver = _self.get_resolver().await?;
 
@@ -101,28 +99,48 @@ impl Source for DNSSource {
                             if data.is_err() {
                                 continue;
                             }
-                            return Ok(data.unwrap().parse()?);
+                   
+                            let ip = data.unwrap().parse()?;
+                            if family == Family::Any {
+                                return Ok(ip)
+                            } else if family == Family::IPv4 {
+                                if let IpAddr::V4(_) = ip {
+                                    return Ok(ip);
+                                }
+                                return Err(Error::DnsResolutionEmpty);
+                            } else {// if family == Family::IPv6
+                                if let IpAddr::V6(_) = ip {
+                                    return Ok(ip);
+                                }
+                                return Err(Error::UnsupportedFamily);
+                            }
                         }
                     }
                 }
                 QueryType::A => {
-                    for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
-                        if let IpAddr::V4(_) = reply {
-                            return Ok(reply);
+                    if family == Family::IPv4 || family == Family::Any {
+                        for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
+                            if let IpAddr::V4(_) = reply {
+                                return Ok(reply);
+                            }
                         }
                     }
+                    return Err(Error::UnsupportedFamily)
                 }
                 QueryType::AAAA => {
-                    for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
-                        if let IpAddr::V6(_) = reply {
-                            return Ok(reply);
+                    if family == Family::IPv6 || family == Family::Any {
+                        for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
+                            if let IpAddr::V6(_) = reply {
+                                return Ok(reply);
+                            }
                         }
                     }
+                    return Err(Error::UnsupportedFamily);
                 }
             }
             Err(Error::DnsResolutionEmpty)
         }
-        Box::pin(run(self))
+        Box::pin(run(self, family))
     }
 
     fn box_clone(&self) -> Box<dyn Source> {
@@ -146,9 +164,6 @@ where
             QueryType::AAAA,
             "myip.opendns.com",
         ),
-        DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
-        DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
-        DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
         DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
     ]
     .into_iter()

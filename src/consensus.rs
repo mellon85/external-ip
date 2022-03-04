@@ -158,6 +158,7 @@ mod tests {
     use super::*;
 
     use crate::sources::MockSource;
+    use mockall::predicate::eq;
     use std::net::Ipv4Addr;
     use tokio_test::block_on;
 
@@ -165,15 +166,19 @@ mod tests {
 
     fn make_success(ip: IpAddr) -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
-        mock.expect_get_ip(Family::Any)
+        mock.expect_get_ip()
+            .with(eq(Family::Any))
             .times(1)
-            .returning(move || Box::pin(futures::future::ready(Ok(ip))));
+            .returning(move |_| Box::pin(futures::future::ready(Ok(ip))));
         Box::new(mock)
     }
 
     fn make_fail() -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
-        mock.expect_get_ip(Family::Any).times(1).returning(move || {
+        mock.expect_get_ip()
+        .with(eq(Family::Any))
+        .times(1)
+        .returning(move |_| {
             let invalid_ip: Result<IpAddr, std::net::AddrParseError> = "x.0.0.0".parse();
             Box::pin(futures::future::ready(Err(sources::Error::InvalidAddress(
                 invalid_ip.err().unwrap(),
@@ -184,7 +189,7 @@ mod tests {
 
     fn make_untouched() -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
-        mock.expect_get_ip(Family::Any).times(0);
+        mock.expect_get_ip().with(eq(Family::Any)).times(0);
         Box::new(mock)
     }
 

@@ -1,14 +1,14 @@
-use crate::sources::interfaces::{IpFuture, IpResult, Source};
-use igd;
+/* use crate::sources::interfaces; */
+use crate::sources::interfaces::{Error, Family, IpFuture, IpResult, Source};
+use std::net::IpAddr;
 use std::pin::Pin;
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::task::{Poll, Waker};
 use std::thread;
 
+use igd;
 use log::trace;
-
-use std::net::IpAddr;
 
 /// IGD Source of the external ip
 ///
@@ -26,14 +26,15 @@ impl IGD {
 }
 
 impl Source for IGD {
-    fn get_ip<'a>(&'a self) -> IpFuture<'a> {
+    fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
         let (tx, rx) = mpsc::channel();
         let future = IGDFuture {
             rx: rx,
             waker: Arc::new(Mutex::from(None)),
+            family: family,
         };
         future.run(tx);
-        Box::pin(future)
+        return Box::pin(future);
     }
 
     fn box_clone(&self) -> Box<dyn Source> {
@@ -44,6 +45,7 @@ impl Source for IGD {
 struct IGDFuture {
     rx: mpsc::Receiver<IpResult>,
     waker: Arc<Mutex<Option<Waker>>>,
+    family: Family,
 }
 
 impl std::fmt::Display for IGD {
@@ -55,23 +57,25 @@ impl std::fmt::Display for IGD {
 impl IGDFuture {
     pub fn run(&self, tx: mpsc::Sender<IpResult>) {
         let waker = self.waker.clone();
-        thread::spawn(move || {
-            trace!("IGD Future thread started");
-            fn inner() -> IpResult {
-                let gateway = igd::search_gateway(Default::default())?;
-                let ip = gateway.get_external_ip()?;
-                return Ok(IpAddr::from(ip));
-            }
+        if matches!(self.family, Family::IPv4) {
+            thread::spawn(move || {
+                trace!("IGD Future thread started");
+                fn inner() -> IpResult {
+                    let gateway = igd::search_gateway(Default::default())?;
+                    let ip = gateway.get_external_ip()?;
+                    return Ok(IpAddr::from(ip));
+                }
 
-            let result = inner();
-            log::debug!("IGD task completed: {:?}", result);
-            let r = tx.send(IpResult::from(result));
-            log::debug!("Send result: {:?}", r);
+                let result = inner();
+                log::debug!("IGD task completed: {:?}", result);
+                let r = tx.send(IpResult::from(result));
+                log::debug!("Send result: {:?}", r);
 
-            if let Some(waker) = waker.lock().unwrap().take() {
-                waker.wake();
-            }
-        });
+                if let Some(waker) = waker.lock().unwrap().take() {
+                    waker.wake();
+                }
+            });
+        }
     }
 }
 
@@ -79,14 +83,18 @@ impl std::future::Future for IGDFuture {
     type Output = IpResult;
 
     fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context) -> Poll<Self::Output> {
-        let r = self.rx.try_recv();
-        match r {
-            Err(_) => {
-                let mut waker = self.waker.lock().unwrap();
-                *waker = Some(cx.waker().clone());
-                Poll::Pending
+        if matches!(self.family, Family::IPv4) {
+            let r = self.rx.try_recv();
+            match r {
+                Err(_) => {
+                    let mut waker = self.waker.lock().unwrap();
+                    *waker = Some(cx.waker().clone());
+                    return Poll::Pending;
+                }
+                Ok(x) => return Poll::Ready(x),
             }
-            Ok(x) => Poll::Ready(x),
+        } else {
+            return Poll::Ready(std::result::Result::Err(Error::UnsupportedFamily));
         }
     }
 }

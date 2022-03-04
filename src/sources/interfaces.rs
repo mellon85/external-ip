@@ -4,7 +4,7 @@ use std::net::IpAddr;
 use std::pin::Pin;
 
 /// IP Address family to try to resolve for
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Family {
     /// Doesn't provide a specific IP family, so it will try all of them
     Any,
@@ -27,6 +27,7 @@ pub enum Error {
     InvalidAddress(std::net::AddrParseError),
     Dns(trust_dns_resolver::error::ResolveError),
     DnsResolutionEmpty,
+    UnsupportedFamily,
 
     #[cfg(feature = "igd")]
     IgdExternalIp(igd::GetExternalIpError),
@@ -48,6 +49,7 @@ impl std::error::Error for Error {
             Error::InvalidAddress(e) => Some(e),
             Error::Dns(e) => Some(e),
             Error::DnsResolutionEmpty => None,
+            Error::UnsupportedFamily => None,
             #[cfg(feature = "igd")]
             Error::IgdExternalIp(e) => Some(e),
             #[cfg(feature = "igd")]
