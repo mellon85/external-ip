@@ -88,7 +88,7 @@ impl DNSSource {
 }
 
 impl Source for DNSSource {
-    fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
+    fn get_ip<'a>(&'a self, _family: Family) -> IpFuture<'a> {
         async fn run(_self: &DNSSource) -> IpResult {
             trace!("Contacting {:?} for {}", _self.server, _self.record);
             let resolver = _self.get_resolver().await?;

@@ -1,4 +1,4 @@
-use crate::sources::interfaces::{IpFuture, IpResult, Source};
+use crate::sources::interfaces::{Family, IpFuture, IpResult, Source};
 use log::trace;
 
 use hyper::body::HttpBody;
@@ -21,7 +21,7 @@ impl HTTPSource {
 }
 
 impl Source for HTTPSource {
-    fn get_ip<'a>(&'a self) -> IpFuture<'a> {
+    fn get_ip<'a>(&'a self, _family: Family) -> IpFuture<'a> {
         async fn run(_self: &HTTPSource) -> IpResult {
             trace!("Contacting {:?}", _self.url);
 
@@ -37,7 +37,7 @@ impl Source for HTTPSource {
             }
 
             Ok(std::str::from_utf8(&message)?.trim().parse()?)
-        };
+        }
 
         Box::pin(run(self))
     }

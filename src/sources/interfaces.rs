@@ -28,6 +28,7 @@ pub enum Error {
     InvalidAddress(std::net::AddrParseError),
     Dns(trust_dns_resolver::error::ResolveError),
     DnsResolutionEmpty,
+    UnsupportedFamily,
 
     #[cfg(feature = "igd")]
     IgdExternalIp(igd::GetExternalIpError),
@@ -50,6 +51,7 @@ impl std::error::Error for Error {
             Error::InvalidAddress(e) => Some(e),
             Error::Dns(e) => Some(e),
             Error::DnsResolutionEmpty => None,
+            Error::UnsupportedFamily => None,
             #[cfg(feature = "igd")]
             Error::IgdExternalIp(e) => Some(e),
             #[cfg(feature = "igd")]
