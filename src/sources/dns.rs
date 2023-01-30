@@ -65,6 +65,7 @@ impl DNSSource {
                             let address = SocketAddr::new(found_ip, 53);
                             trace!("DNS address {}", address);
                             config.add_name_server(NameServerConfig {
+                                bind_addr: None,
                                 socket_addr: address,
                                 protocol: trust_dns_resolver::config::Protocol::Udp,
                                 tls_dns_name: Some(server.clone()),
