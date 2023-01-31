@@ -73,10 +73,8 @@ impl DNSSource {
                                 tls_dns_name: Some(server.clone()),
                                 trust_nx_responses: true,
                             });
-                            let resolver_opts = ResolverOpts {
-                                ip_strategy: LookupIpStrategy::Ipv4AndIpv6,
-                                ..ResolverOpts::default()
-                            };
+                            let mut resolver_opts = ResolverOpts::default();
+                            resolver_opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
                             return Ok(TokioAsyncResolver::tokio(config, resolver_opts)?);
                         }
                     }
