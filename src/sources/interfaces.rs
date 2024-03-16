@@ -5,8 +5,7 @@ use std::pin::Pin;
 
 #[derive(Debug)]
 pub enum Error {
-    Http(hyper::Error),
-    HttpInvalidUri(http::uri::InvalidUri),
+    Http(reqwest::Error),
     DecodeError(std::str::Utf8Error),
     InvalidAddress(std::net::AddrParseError),
     Dns(trust_dns_resolver::error::ResolveError),
@@ -28,7 +27,6 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Error::Http(e) => Some(e),
-            Error::HttpInvalidUri(e) => Some(e),
             Error::DecodeError(e) => Some(e),
             Error::InvalidAddress(e) => Some(e),
             Error::Dns(e) => Some(e),
@@ -41,15 +39,9 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<hyper::Error> for Error {
-    fn from(err: hyper::Error) -> Error {
+impl From<reqwest::Error> for Error {
+    fn from(err: reqwest::Error) -> Error {
         Error::Http(err)
-    }
-}
-
-impl From<http::uri::InvalidUri> for Error {
-    fn from(err: http::uri::InvalidUri) -> Error {
-        Error::HttpInvalidUri(err)
     }
 }
 

@@ -30,8 +30,8 @@ impl DNSSource {
         record: R,
     ) -> Box<dyn Source> {
         Box::new(DNSSource {
-            server: server,
-            record_type: record_type,
+            server,
+            record_type,
             record: record.into(),
         })
     }
@@ -50,7 +50,7 @@ impl std::fmt::Display for DNSSource {
 impl DNSSource {
     async fn get_resolver(self: &DNSSource) -> Result<TokioAsyncResolver, Error> {
         let resolver =
-            TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default())?;
+            TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
 
         if let Some(server) = &self.server {
             let response = resolver.lookup_ip(server.as_str()).await;
@@ -69,11 +69,9 @@ impl DNSSource {
                                 socket_addr: address,
                                 protocol: trust_dns_resolver::config::Protocol::Udp,
                                 tls_dns_name: Some(server.clone()),
-                                trust_nx_responses: true,
+                                trust_negative_responses: true,
                             });
-                            return Ok(
-                                TokioAsyncResolver::tokio(config, ResolverOpts::default())?
-                            );
+                            return Ok(TokioAsyncResolver::tokio(config, ResolverOpts::default()));
                         }
                     }
                 }
@@ -108,7 +106,7 @@ impl Source for DNSSource {
                 }
             }
             Err(Error::DnsResolutionEmpty)
-        };
+        }
         Box::pin(run(self))
     }
 
