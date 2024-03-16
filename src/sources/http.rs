@@ -1,10 +1,6 @@
 use crate::sources::interfaces::{IpFuture, IpResult, Source};
 use log::trace;
 
-use hyper::body::HttpBody;
-use hyper::Client;
-use hyper_tls::HttpsConnector;
-
 /// HTTP(s) Source of the external ip
 ///
 /// It expects a URL to contact to retrive in the content of the message the IP
@@ -25,19 +21,10 @@ impl Source for HTTPSource {
         async fn run(_self: &HTTPSource) -> IpResult {
             trace!("Contacting {:?}", _self.url);
 
-            let https = HttpsConnector::new();
-            let client = Client::builder().build::<_, hyper::Body>(https);
+            let resp = reqwest::get(&_self.url).await?.text().await?;
 
-            let mut res = client.get(_self.url.parse()?).await?;
-            trace!("Result for {:?}: {:?}", _self.url, res);
-
-            let mut message = vec![];
-            while let Some(chunk) = res.body_mut().data().await {
-                message.extend(chunk?);
-            }
-
-            Ok(std::str::from_utf8(&message)?.trim().parse()?)
-        };
+            Ok(resp.trim().parse()?)
+        }
 
         Box::pin(run(self))
     }
