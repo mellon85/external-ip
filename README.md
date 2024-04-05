@@ -64,6 +64,13 @@ The library supports 3 consensus policies. The default policy is Random
 - Random
   Query the sources one by one in random order and return the first success
 
+# Families
+
+It's possible to select a specific address family to resolve to and all resolver will try to resolve to that or fail.
+- All
+- IPv4
+- IPv6
+
 # Changelog
 
 ## v1
@@ -81,3 +88,7 @@ The library supports 3 consensus policies. The default policy is Random
 ## v4
 
 - Consensus is now not consumed when used
+
+## v5
+
+- Added ip family selection option
