@@ -1,6 +1,6 @@
 [package]
 name = "external-ip"
-version = "4.3.0"
+version = "5.0.0"
 authors = ["Dario Meloni <mellon85@gmail.com>"]
 edition = "2018"
 license = "MIT"
