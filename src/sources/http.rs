@@ -1,4 +1,4 @@
-use crate::sources::interfaces::{IpFuture, IpResult, Source};
+use crate::sources::interfaces::{Error, Family, IpFuture, IpResult, Source};
 use log::trace;
 
 /// HTTP(s) Source of the external ip
@@ -17,16 +17,19 @@ impl HTTPSource {
 }
 
 impl Source for HTTPSource {
-    fn get_ip<'a>(&'a self) -> IpFuture<'a> {
-        async fn run(_self: &HTTPSource) -> IpResult {
+    fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
+        async fn run(_self: &HTTPSource, family: Family) -> IpResult {
             trace!("Contacting {:?}", _self.url);
+            if family == Family::IPv6 {
+                return Err(Error::UnsupportedFamily)
+            }
 
             let resp = reqwest::get(&_self.url).await?.text().await?;
 
             Ok(resp.trim().parse()?)
         }
 
-        Box::pin(run(self))
+        Box::pin(run(self, family))
     }
 
     fn box_clone(&self) -> Box<dyn Source> {

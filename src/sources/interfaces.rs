@@ -3,6 +3,23 @@ use std::future::Future;
 use std::net::IpAddr;
 use std::pin::Pin;
 
+/// IP Address family to try to resolve for
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Family {
+    /// Doesn't provide a specific IP family, so it will try all of them
+    Any,
+    /// Lookup only IPv4 addresses
+    IPv4,
+    /// Lookup only IPv6 addresses
+    IPv6,
+}
+
+impl Default for Family {
+    fn default() -> Self {
+        Family::Any
+    }
+}
+
 #[derive(Debug)]
 pub enum Error {
     Http(reqwest::Error),
@@ -10,6 +27,7 @@ pub enum Error {
     InvalidAddress(std::net::AddrParseError),
     Dns(trust_dns_resolver::error::ResolveError),
     DnsResolutionEmpty,
+    UnsupportedFamily,
 
     #[cfg(feature = "igd")]
     IgdExternalIp(igd::GetExternalIpError),
@@ -31,6 +49,7 @@ impl std::error::Error for Error {
             Error::InvalidAddress(e) => Some(e),
             Error::Dns(e) => Some(e),
             Error::DnsResolutionEmpty => None,
+            Error::UnsupportedFamily => None,
             #[cfg(feature = "igd")]
             Error::IgdExternalIp(e) => Some(e),
             #[cfg(feature = "igd")]
@@ -84,7 +103,7 @@ pub type IpFuture<'a> = Pin<Box<dyn Future<Output = IpResult> + Send + 'a>>;
 #[cfg_attr(test, mockall::automock)]
 pub trait Source: Display {
     /// Returns a future that will represent the IP the source obtained
-    fn get_ip<'a>(&'a self) -> IpFuture<'a>;
+    fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a>;
 
     /// Clones the Source into a new Boxed trait object.
     fn box_clone(&self) -> Box<dyn Source>;

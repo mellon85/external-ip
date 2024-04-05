@@ -7,6 +7,8 @@ use std::net::IpAddr;
 use std::option::Option;
 use std::vec::Vec;
 
+use crate::sources::Family;
+
 /// Type alias for easier usage of the library
 pub type Sources = Vec<Box<dyn sources::Source>>;
 
@@ -37,12 +39,14 @@ impl Default for Policy {
 pub struct Consensus {
     voters: Sources,
     policy: Policy,
+    family: Family,
 }
 
 /// Consensus builder
 pub struct ConsensusBuilder {
     voters: Sources,
     policy: Policy,
+    family: Family,
 }
 
 impl ConsensusBuilder {
@@ -50,6 +54,7 @@ impl ConsensusBuilder {
         ConsensusBuilder {
             voters: vec![],
             policy: Policy::default(),
+            family: Family::default(),
         }
     }
 
@@ -71,11 +76,17 @@ impl ConsensusBuilder {
         self
     }
 
+    pub fn family(mut self, family: Family) -> ConsensusBuilder {
+        self.family = family;
+        self
+    }
+
     /// Returns the configured consensus struct from the builder
     pub fn build(self) -> Consensus {
         Consensus {
             voters: self.voters,
             policy: self.policy,
+            family: self.family,
         }
     }
 }
@@ -92,7 +103,8 @@ impl Consensus {
 
     async fn all(&self) -> Option<IpAddr> {
         let results =
-            futures::future::join_all(self.voters.iter().map(|voter| voter.get_ip())).await;
+            futures::future::join_all(self.voters.iter().map(|voter| voter.get_ip(self.family)))
+                .await;
 
         debug!("Results {:?}", results);
         let mut accumulate = HashMap::new();
@@ -117,7 +129,7 @@ impl Consensus {
 
     async fn first(&self) -> Option<IpAddr> {
         for voter in &self.voters {
-            let result = voter.get_ip().await;
+            let result = voter.get_ip(self.family).await;
             debug!("Results {:?}", result);
             if result.is_ok() {
                 return Some(result.unwrap());
@@ -130,7 +142,7 @@ impl Consensus {
     async fn random(&self) -> Option<IpAddr> {
         let mut rng = rand::thread_rng();
         for voter in self.voters.choose_multiple(&mut rng, self.voters.len()) {
-            let result = voter.get_ip().await;
+            let result = voter.get_ip(self.family).await;
             debug!("Results {:?}", result);
             if result.is_ok() {
                 return Some(result.unwrap());
@@ -146,6 +158,7 @@ mod tests {
     use super::*;
 
     use crate::sources::MockSource;
+    use mockall::predicate::eq;
     use std::net::Ipv4Addr;
     use tokio_test::block_on;
 
@@ -154,14 +167,18 @@ mod tests {
     fn make_success(ip: IpAddr) -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
         mock.expect_get_ip()
+            .with(eq(Family::Any))
             .times(1)
-            .returning(move || Box::pin(futures::future::ready(Ok(ip))));
+            .returning(move |_| Box::pin(futures::future::ready(Ok(ip))));
         Box::new(mock)
     }
 
     fn make_fail() -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
-        mock.expect_get_ip().times(1).returning(move || {
+        mock.expect_get_ip()
+        .with(eq(Family::Any))
+        .times(1)
+        .returning(move |_| {
             let invalid_ip: Result<IpAddr, std::net::AddrParseError> = "x.0.0.0".parse();
             Box::pin(futures::future::ready(Err(sources::Error::InvalidAddress(
                 invalid_ip.err().unwrap(),
@@ -172,7 +189,7 @@ mod tests {
 
     fn make_untouched() -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
-        mock.expect_get_ip().times(0);
+        mock.expect_get_ip().with(eq(Family::Any)).times(0);
         Box::new(mock)
     }
 
