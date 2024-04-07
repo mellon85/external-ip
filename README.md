@@ -92,3 +92,4 @@ It's possible to select a specific address family to resolve to and all resolver
 ## v5
 
 - Added ip family selection option
+- Support http sources with IPv6
