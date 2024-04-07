@@ -1,5 +1,6 @@
 use crate::sources::interfaces::{Error, Family, IpFuture, IpResult, Source};
 use log::trace;
+use std::net::IpAddr;
 
 /// HTTP(s) Source of the external ip
 ///
@@ -20,13 +21,15 @@ impl Source for HTTPSource {
     fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
         async fn run(_self: &HTTPSource, family: Family) -> IpResult {
             trace!("Contacting {:?}", _self.url);
-            if family == Family::IPv6 {
-                return Err(Error::UnsupportedFamily)
-            }
-
             let resp = reqwest::get(&_self.url).await?.text().await?;
-
-            Ok(resp.trim().parse()?)
+            let parsed_ip: IpAddr = resp.trim().parse()?;
+            if matches!(parsed_ip, IpAddr::V4(_)) && matches!(family, Family::IPv4 | Family::Any) {
+                return Ok(parsed_ip);
+            }
+            if matches!(parsed_ip, IpAddr::V6(_)) && matches!(family, Family::IPv6 | Family::Any) {
+                return Ok(parsed_ip);
+            }
+            Err(Error::UnsupportedFamily)
         }
 
         Box::pin(run(self, family))
