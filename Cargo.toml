@@ -14,7 +14,7 @@ Asynchronous library to retrieve the system external IP
 futures = "0.3"
 reqwest = {version = "0.12" }
 log = "0.4"
-trust-dns-resolver = {version="0.23", features=["tokio-runtime"]}
+hickory-resolver = "0.24"
 igd = { version = "0.12", optional = true }
 rand = "0.8"
 

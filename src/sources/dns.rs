@@ -3,8 +3,8 @@ use log::trace;
 use std::net::IpAddr;
 use std::net::SocketAddr;
 
-use trust_dns_resolver::config::*;
-use trust_dns_resolver::TokioAsyncResolver;
+use hickory_resolver::config::*;
+use hickory_resolver::TokioAsyncResolver;
 
 #[derive(Debug, Clone)]
 pub enum QueryType {
@@ -69,7 +69,7 @@ impl DNSSource {
                             config.add_name_server(NameServerConfig {
                                 bind_addr: None,
                                 socket_addr: address,
-                                protocol: trust_dns_resolver::config::Protocol::Udp,
+                                protocol: hickory_resolver::config::Protocol::Udp,
                                 tls_dns_name: Some(server.clone()),
                                 trust_negative_responses: true,
                             });

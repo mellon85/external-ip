@@ -25,7 +25,7 @@ pub enum Error {
     Http(reqwest::Error),
     DecodeError(std::str::Utf8Error),
     InvalidAddress(std::net::AddrParseError),
-    Dns(trust_dns_resolver::error::ResolveError),
+    Dns(hickory_resolver::error::ResolveError),
     DnsResolutionEmpty,
     UnsupportedFamily,
 
@@ -76,8 +76,8 @@ impl From<std::net::AddrParseError> for Error {
     }
 }
 
-impl From<trust_dns_resolver::error::ResolveError> for Error {
-    fn from(err: trust_dns_resolver::error::ResolveError) -> Error {
+impl From<hickory_resolver::error::ResolveError> for Error {
+    fn from(err: hickory_resolver::error::ResolveError) -> Error {
         Error::Dns(err)
     }
 }
