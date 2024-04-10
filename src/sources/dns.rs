@@ -164,7 +164,11 @@ where
             QueryType::AAAA,
             "myip.opendns.com",
         ),
-        DNSSource::source(None, QueryType::TXT, "o-o.myaddr.l.google.com"),
+        DNSSource::source(
+            Some(String::from("ns1.google.com")),
+            QueryType::TXT,
+            "o-o.myaddr.l.google.com",
+        ),
     ]
     .into_iter()
     .collect()
