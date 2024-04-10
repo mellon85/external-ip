@@ -17,13 +17,18 @@ pub fn get_sources<T>() -> T
 where
     T: std::iter::FromIterator<Box<dyn Source>>,
 {
-    let h: Vec<_> = get_http_sources();
+    let sources = if cfg!(feature = "igd") {
+        Some(IGD::source())
+    } else {
+        None
+    };
+
     let d: Vec<_> = get_dns_sources();
+    let h: Vec<_> = get_http_sources();
 
-    let sources = h.into_iter().chain(d.into_iter());
-
-    #[cfg(feature = "igd")]
-    let sources = sources.chain(std::iter::once(IGD::source()));
+    let sources = sources
+        .into_iter()
+        .chain(d.into_iter().chain(h.into_iter()));
 
     sources.into_iter().collect()
 }
