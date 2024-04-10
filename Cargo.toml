@@ -17,7 +17,6 @@ log = "0.4"
 trust-dns-resolver = {version="0.23", features=["tokio-runtime"]}
 igd = { version = "0.12", optional = true }
 rand = "0.8"
-cargo-upgrades = "2.0.0"
 
 [dev-dependencies]
 tokio-test = "0.4"
