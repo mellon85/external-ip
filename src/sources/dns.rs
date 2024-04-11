@@ -6,7 +6,7 @@ use std::net::SocketAddr;
 use hickory_resolver::config::*;
 use hickory_resolver::TokioAsyncResolver;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum QueryType {
     TXT,
     A,
@@ -50,9 +50,15 @@ impl std::fmt::Display for DNSSource {
 }
 
 impl DNSSource {
-    async fn get_resolver(self: &DNSSource) -> Result<TokioAsyncResolver, Error> {
-        let resolver =
-            TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
+    async fn get_resolver(self: &DNSSource, family: Family) -> Result<TokioAsyncResolver, Error> {
+        let mut resolver_opts = ResolverOpts::default();
+        resolver_opts.ip_strategy = match family {
+            Family::IPv4 => LookupIpStrategy::Ipv4Only,
+            Family::IPv6 => LookupIpStrategy::Ipv6Only,
+            Family::Any => resolver_opts.ip_strategy,
+        };
+
+        let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), resolver_opts);
 
         if let Some(server) = &self.server {
             let response = resolver.lookup_ip(server.as_str()).await;
@@ -88,8 +94,20 @@ impl DNSSource {
 impl Source for DNSSource {
     fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
         async fn run(_self: &DNSSource, family: Family) -> IpResult {
+            if matches!(
+                (family, _self.record_type),
+                (Family::IPv4, QueryType::AAAA) | (Family::IPv6, QueryType::A)
+            ) {
+                return Err(Error::UnsupportedFamily);
+            }
             trace!("Contacting {:?} for {}", _self.server, _self.record);
-            let resolver = _self.get_resolver().await?;
+            let resolver = _self
+                .get_resolver(match _self.record_type {
+                    QueryType::A => Family::IPv4,
+                    QueryType::AAAA => Family::IPv6,
+                    _ => family,
+                })
+                .await?;
 
             match _self.record_type {
                 QueryType::TXT => {
