@@ -57,7 +57,7 @@ impl std::fmt::Display for IGD {
 impl IGDFuture {
     pub fn run(&self, tx: mpsc::Sender<IpResult>) {
         let waker = self.waker.clone();
-        if matches!(self.family, Family::IPv4) {
+        if matches!(self.family, Family::IPv4 | Family::Any) {
             thread::spawn(move || {
                 trace!("IGD Future thread started");
                 fn inner() -> IpResult {
@@ -83,7 +83,7 @@ impl std::future::Future for IGDFuture {
     type Output = IpResult;
 
     fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context) -> Poll<Self::Output> {
-        if matches!(self.family, Family::IPv4) {
+        if matches!(self.family, Family::IPv4 | Family::Any) {
             let r = self.rx.try_recv();
             match r {
                 Err(_) => {
