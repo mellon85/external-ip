@@ -60,7 +60,6 @@ where
         "https://ident.me/",
         "http://whatismyip.akamai.com/",
         "https://myip.dnsomatic.com/",
-        "https://diagnostic.opendns.com/myip",
         "https://api.ipify.org",
         "https://ifconfig.me/ip",
         "https://ipinfo.io/ip",
