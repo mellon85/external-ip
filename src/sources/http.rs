@@ -72,6 +72,15 @@ where
         "https://api.ipify.org",
         "https://ifconfig.me/ip",
         "https://ipinfo.io/ip",
+        "https://ifconfig.co/ip",
+        "https://myip.swishmail.com/ip",
+        "https://ipconfig.pw/ip",
+        "https://myipaddr.info/ip",
+        "https://ip.wookingwoo.com/ip",
+        "https://ifconfig.su/ip",
+        "https://ip4.dnshome.de/",
+        "https://ip6.dnshome.de/",
+        "https://now-dns.com/ip",
     ]
     .iter()
     .map(|x| HTTPSource::source(*x))
