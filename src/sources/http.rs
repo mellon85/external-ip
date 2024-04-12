@@ -21,7 +21,7 @@ impl Source for HTTPSource {
     fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
         async fn run(_self: &HTTPSource, family: Family) -> IpResult {
             trace!("Contacting {:?}", _self.url);
-            let client = reqwest::Client::builder();
+            let client = reqwest::Client::builder().timeout(std::time::Duration::from_secs(30));
             let client = match family {
                 Family::IPv4 => client.local_address(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))),
                 Family::IPv6 => {
