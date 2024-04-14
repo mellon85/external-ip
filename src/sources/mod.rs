@@ -26,9 +26,7 @@ where
     let d: Vec<_> = get_dns_sources();
     let h: Vec<_> = get_http_sources();
 
-    let sources = sources
-        .into_iter()
-        .chain(d.into_iter().chain(h.into_iter()));
+    let sources = sources.into_iter().chain(d.into_iter().chain(h));
 
     sources.into_iter().collect()
 }

@@ -1,5 +1,3 @@
-use external_ip;
-
 use tokio_test::block_on;
 
 #[test]

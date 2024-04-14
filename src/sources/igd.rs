@@ -7,7 +7,6 @@ use std::sync::{Arc, Mutex};
 use std::task::{Poll, Waker};
 use std::thread;
 
-use igd;
 use log::trace;
 
 /// IGD Source of the external ip
@@ -26,15 +25,15 @@ impl IGD {
 }
 
 impl Source for IGD {
-    fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
+    fn get_ip(&self, family: Family) -> IpFuture<'_> {
         let (tx, rx) = mpsc::channel();
         let future = IGDFuture {
-            rx: rx,
+            rx,
             waker: Arc::new(Mutex::from(None)),
-            family: family,
+            family,
         };
         future.run(tx);
-        return Box::pin(future);
+        Box::pin(future)
     }
 
     fn box_clone(&self) -> Box<dyn Source> {
@@ -63,7 +62,7 @@ impl IGDFuture {
                 fn inner() -> IpResult {
                     let gateway = igd::search_gateway(Default::default())?;
                     let ip = gateway.get_external_ip()?;
-                    return Ok(IpAddr::from(ip));
+                    Ok(IpAddr::from(ip))
                 }
 
                 let result = inner();
@@ -89,12 +88,12 @@ impl std::future::Future for IGDFuture {
                 Err(_) => {
                     let mut waker = self.waker.lock().unwrap();
                     *waker = Some(cx.waker().clone());
-                    return Poll::Pending;
+                    Poll::Pending
                 }
-                Ok(x) => return Poll::Ready(x),
+                Ok(x) => Poll::Ready(x),
             }
         } else {
-            return Poll::Ready(std::result::Result::Err(Error::UnsupportedFamily));
+            Poll::Ready(std::result::Result::Err(Error::UnsupportedFamily))
         }
     }
 }

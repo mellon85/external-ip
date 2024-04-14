@@ -18,7 +18,7 @@ impl HTTPSource {
 }
 
 impl Source for HTTPSource {
-    fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
+    fn get_ip(&self, family: Family) -> IpFuture<'_> {
         async fn run(_self: &HTTPSource, family: Family) -> IpResult {
             trace!("Contacting {:?}", _self.url);
             let client = reqwest::Client::builder().timeout(std::time::Duration::from_secs(30));

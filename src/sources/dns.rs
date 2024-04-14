@@ -1,6 +1,6 @@
 use crate::sources::interfaces::{Error, Family, IpFuture, IpResult, Source};
 use log::trace;
-use std::net::IpAddr;
+
 use std::net::SocketAddr;
 
 use hickory_resolver::config::*;
@@ -92,7 +92,7 @@ impl DNSSource {
 }
 
 impl Source for DNSSource {
-    fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a> {
+    fn get_ip(&self, family: Family) -> IpFuture<'_> {
         async fn run(_self: &DNSSource, family: Family) -> IpResult {
             if matches!(
                 (family, _self.record_type),
@@ -117,17 +117,18 @@ impl Source for DNSSource {
                             if data.is_err() {
                                 continue;
                             }
-                   
+
                             let ip = data.unwrap().parse()?;
                             if family == Family::Any {
-                                return Ok(ip)
+                                return Ok(ip);
                             } else if family == Family::IPv4 {
-                                if let IpAddr::V4(_) = ip {
+                                if ip.is_ipv4() {
                                     return Ok(ip);
                                 }
                                 return Err(Error::DnsResolutionEmpty);
-                            } else {// if family == Family::IPv6
-                                if let IpAddr::V6(_) = ip {
+                            } else {
+                                // if family == Family::IPv6
+                                if ip.is_ipv6() {
                                     return Ok(ip);
                                 }
                                 return Err(Error::UnsupportedFamily);
@@ -138,17 +139,17 @@ impl Source for DNSSource {
                 QueryType::A => {
                     if family == Family::IPv4 || family == Family::Any {
                         for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
-                            if let IpAddr::V4(_) = reply {
+                            if reply.is_ipv4() {
                                 return Ok(reply);
                             }
                         }
                     }
-                    return Err(Error::UnsupportedFamily)
+                    return Err(Error::UnsupportedFamily);
                 }
                 QueryType::AAAA => {
                     if family == Family::IPv6 || family == Family::Any {
                         for reply in resolver.lookup_ip(_self.record.clone()).await?.iter() {
-                            if let IpAddr::V6(_) = reply {
+                            if reply.is_ipv6() {
                                 return Ok(reply);
                             }
                         }
