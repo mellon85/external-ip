@@ -1,5 +1,5 @@
 use crate::sources;
-use futures;
+
 use log::{debug, error};
 use rand::seq::SliceRandom;
 use std::collections::HashMap;
@@ -16,6 +16,7 @@ use std::default::Default;
 
 /// Policies for Consensus resolution
 #[derive(Debug, Copy, Clone)]
+#[derive(Default)]
 pub enum Policy {
     /// Requires all sources to be queried, it will ignore the sources returning errors but and it
     /// will return the IP with the most replies as the result.
@@ -25,14 +26,11 @@ pub enum Policy {
     First,
     /// Will test the sources one by one in random order until there's one success and will return
     /// it as the result.
+    #[default]
     Random,
 }
 
-impl Default for Policy {
-    fn default() -> Self {
-        Policy::Random
-    }
-}
+
 
 /// Consensus system that aggregates the various sources of information and returns the most common
 /// reply
@@ -47,6 +45,12 @@ pub struct ConsensusBuilder {
     voters: Sources,
     policy: Policy,
     family: Family,
+}
+
+impl Default for ConsensusBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ConsensusBuilder {

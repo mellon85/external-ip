@@ -28,7 +28,7 @@ where
 
     let sources = sources
         .into_iter()
-        .chain(d.into_iter().chain(h.into_iter()));
+        .chain(d.into_iter().chain(h));
 
     sources.into_iter().collect()
 }

@@ -5,8 +5,10 @@ use std::pin::Pin;
 
 /// IP Address family to try to resolve for
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Default)]
 pub enum Family {
     /// Doesn't provide a specific IP family, so it will try all of them
+    #[default]
     Any,
     /// Lookup only IPv4 addresses
     IPv4,
@@ -14,11 +16,7 @@ pub enum Family {
     IPv6,
 }
 
-impl Default for Family {
-    fn default() -> Self {
-        Family::Any
-    }
-}
+
 
 #[derive(Debug)]
 pub enum Error {
@@ -103,7 +101,7 @@ pub type IpFuture<'a> = Pin<Box<dyn Future<Output = IpResult> + Send + 'a>>;
 #[cfg_attr(test, mockall::automock)]
 pub trait Source: Display {
     /// Returns a future that will represent the IP the source obtained
-    fn get_ip<'a>(&'a self, family: Family) -> IpFuture<'a>;
+    fn get_ip(&self, family: Family) -> IpFuture<'_>;
 
     /// Clones the Source into a new Boxed trait object.
     fn box_clone(&self) -> Box<dyn Source>;
