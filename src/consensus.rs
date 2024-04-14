@@ -136,7 +136,7 @@ impl Consensus {
             let result = voter.get_ip(self.family).await;
             debug!("Results {:?}", result);
             if result.is_ok() {
-                return Some(result.unwrap());
+                return result.ok();
             }
         }
         debug!("Tried all sources");
@@ -149,7 +149,7 @@ impl Consensus {
             let result = voter.get_ip(self.family).await;
             debug!("Results {:?}", result);
             if result.is_ok() {
-                return Some(result.unwrap());
+                return result.ok();
             }
         }
         debug!("Tried all sources");
