@@ -15,8 +15,7 @@ pub type Sources = Vec<Box<dyn sources::Source>>;
 use std::default::Default;
 
 /// Policies for Consensus resolution
-#[derive(Debug, Copy, Clone)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Default)]
 pub enum Policy {
     /// Requires all sources to be queried, it will ignore the sources returning errors but and it
     /// will return the IP with the most replies as the result.
@@ -29,8 +28,6 @@ pub enum Policy {
     #[default]
     Random,
 }
-
-
 
 /// Consensus system that aggregates the various sources of information and returns the most common
 /// reply
@@ -180,14 +177,14 @@ mod tests {
     fn make_fail() -> Box<dyn sources::Source> {
         let mut mock = MockSource::new();
         mock.expect_get_ip()
-        .with(eq(Family::Any))
-        .times(1)
-        .returning(move |_| {
-            let invalid_ip: Result<IpAddr, std::net::AddrParseError> = "x.0.0.0".parse();
-            Box::pin(futures::future::ready(Err(sources::Error::InvalidAddress(
-                invalid_ip.err().unwrap(),
-            ))))
-        });
+            .with(eq(Family::Any))
+            .times(1)
+            .returning(move |_| {
+                let invalid_ip: Result<IpAddr, std::net::AddrParseError> = "x.0.0.0".parse();
+                Box::pin(futures::future::ready(Err(sources::Error::InvalidAddress(
+                    invalid_ip.err().unwrap(),
+                ))))
+            });
         Box::new(mock)
     }
 

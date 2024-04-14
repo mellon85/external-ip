@@ -4,8 +4,7 @@ use std::net::IpAddr;
 use std::pin::Pin;
 
 /// IP Address family to try to resolve for
-#[derive(Copy, Clone, Debug, PartialEq)]
-#[derive(Default)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub enum Family {
     /// Doesn't provide a specific IP family, so it will try all of them
     #[default]
@@ -15,8 +14,6 @@ pub enum Family {
     /// Lookup only IPv6 addresses
     IPv6,
 }
-
-
 
 #[derive(Debug)]
 pub enum Error {

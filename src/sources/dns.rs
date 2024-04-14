@@ -117,16 +117,17 @@ impl Source for DNSSource {
                             if data.is_err() {
                                 continue;
                             }
-                   
+
                             let ip = data.unwrap().parse()?;
                             if family == Family::Any {
-                                return Ok(ip)
+                                return Ok(ip);
                             } else if family == Family::IPv4 {
                                 if ip.is_ipv4() {
                                     return Ok(ip);
                                 }
                                 return Err(Error::DnsResolutionEmpty);
-                            } else {// if family == Family::IPv6
+                            } else {
+                                // if family == Family::IPv6
                                 if ip.is_ipv6() {
                                     return Ok(ip);
                                 }
@@ -143,7 +144,7 @@ impl Source for DNSSource {
                             }
                         }
                     }
-                    return Err(Error::UnsupportedFamily)
+                    return Err(Error::UnsupportedFamily);
                 }
                 QueryType::AAAA => {
                     if family == Family::IPv6 || family == Family::Any {

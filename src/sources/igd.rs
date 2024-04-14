@@ -7,7 +7,6 @@ use std::sync::{Arc, Mutex};
 use std::task::{Poll, Waker};
 use std::thread;
 
-
 use log::trace;
 
 /// IGD Source of the external ip
