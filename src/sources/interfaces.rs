@@ -15,80 +15,26 @@ pub enum Family {
     IPv6,
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    Http(reqwest::Error),
-    DecodeError(std::str::Utf8Error),
-    InvalidAddress(std::net::AddrParseError),
-    Dns(hickory_resolver::error::ResolveError),
+    #[error("HTTP request: {0}")]
+    Http(#[from] reqwest::Error),
+    #[error("Decode as UTF-8 failed: {0}")]
+    DecodeError(#[from] std::str::Utf8Error),
+    #[error("Address parsing: {0}")]
+    InvalidAddress(#[from] std::net::AddrParseError),
+    #[error("DNS resolution failed: {0}")]
+    Dns(#[from] hickory_resolver::error::ResolveError),
+    #[error("DNS resolution empty")]
     DnsResolutionEmpty,
+    #[error("Unsupported family")]
     UnsupportedFamily,
-
     #[cfg(feature = "igd")]
-    IgdExternalIp(igd::GetExternalIpError),
+    #[error("IGD external IP: {0}")]
+    IgdExternalIp(#[from] igd::GetExternalIpError),
     #[cfg(feature = "igd")]
-    IgdSearch(igd::SearchError),
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Error {:?}", self)
-    }
-}
-
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Error::Http(e) => Some(e),
-            Error::DecodeError(e) => Some(e),
-            Error::InvalidAddress(e) => Some(e),
-            Error::Dns(e) => Some(e),
-            Error::DnsResolutionEmpty => None,
-            Error::UnsupportedFamily => None,
-            #[cfg(feature = "igd")]
-            Error::IgdExternalIp(e) => Some(e),
-            #[cfg(feature = "igd")]
-            Error::IgdSearch(e) => Some(e),
-        }
-    }
-}
-
-impl From<reqwest::Error> for Error {
-    fn from(err: reqwest::Error) -> Error {
-        Error::Http(err)
-    }
-}
-
-impl From<std::str::Utf8Error> for Error {
-    fn from(err: std::str::Utf8Error) -> Error {
-        Error::DecodeError(err)
-    }
-}
-
-impl From<std::net::AddrParseError> for Error {
-    fn from(err: std::net::AddrParseError) -> Error {
-        Error::InvalidAddress(err)
-    }
-}
-
-impl From<hickory_resolver::error::ResolveError> for Error {
-    fn from(err: hickory_resolver::error::ResolveError) -> Error {
-        Error::Dns(err)
-    }
-}
-
-#[cfg(feature = "igd")]
-impl From<igd::GetExternalIpError> for Error {
-    fn from(err: igd::GetExternalIpError) -> Error {
-        Error::IgdExternalIp(err)
-    }
-}
-
-#[cfg(feature = "igd")]
-impl From<igd::SearchError> for Error {
-    fn from(err: igd::SearchError) -> Error {
-        Error::IgdSearch(err)
-    }
+    #[error("IGD search {0}")]
+    IgdSearch(#[from] igd::SearchError),
 }
 
 pub type IpResult = Result<IpAddr, Error>;
