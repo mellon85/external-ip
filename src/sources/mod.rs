@@ -7,7 +7,7 @@ mod igd;
 mod interfaces;
 
 pub use self::dns::{get_dns_sources, DNSSource, QueryType};
-pub use self::http::{get_http_sources, HTTPSource};
+pub use self::http::{get_http_sources, HTTPSource, HTTPSourceBuilder};
 #[cfg(feature = "igd")]
 pub use self::igd::IGD;
 pub use interfaces::*;
