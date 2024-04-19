@@ -20,14 +20,25 @@ pub enum QueryType {
 /// A few services are known for replying with the IP of the query sender.
 #[derive(Debug, Clone)]
 pub struct DNSSource {
-    server: Option<String>, // if not present use the system DNS
+    server: String,
     record_type: QueryType,
     record: String,
 }
 
 impl DNSSource {
+    pub fn new<S: Into<String>, R: Into<String>>(
+        server: S,
+        record_type: QueryType,
+        record: R,
+    ) -> Self {
+        DNSSource {
+            server: server.into(),
+            record_type,
+            record: record.into(),
+        }
+    }
     fn source<R: Into<String>>(
-        server: Option<String>,
+        server: String,
         record_type: QueryType,
         record: R,
     ) -> Box<dyn Source> {
@@ -58,36 +69,21 @@ impl DNSSource {
             Family::Any => resolver_opts.ip_strategy,
         };
 
-        let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), resolver_opts);
-
-        if let Some(server) = &self.server {
-            let response = resolver.lookup_ip(server.as_str()).await;
-            match response.iter().next() {
-                None => return Err(Error::DnsResolutionEmpty),
-                Some(lookup) => {
-                    let ip = lookup.iter().next();
-                    match ip {
-                        None => return Err(Error::DnsResolutionEmpty),
-                        Some(found_ip) => {
-                            let mut config = ResolverConfig::new();
-                            let address = SocketAddr::new(found_ip, 53);
-                            trace!("DNS address {}", address);
-                            config.add_name_server(NameServerConfig {
-                                bind_addr: None,
-                                socket_addr: address,
-                                protocol: hickory_resolver::config::Protocol::Udp,
-                                tls_dns_name: Some(server.clone()),
-                                trust_negative_responses: true,
-                            });
-                            let mut resolver_opts = ResolverOpts::default();
-                            resolver_opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
-                            return Ok(TokioAsyncResolver::tokio(config, resolver_opts));
-                        }
-                    }
-                }
-            }
+        let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), resolver_opts.clone());
+        let mut config = ResolverConfig::new();
+        for found_ip in resolver.lookup_ip(&self.server).await?.iter() {
+            let address = SocketAddr::new(found_ip, 53);
+            trace!("DNS address {}", address);
+            config.add_name_server(NameServerConfig {
+                bind_addr: None,
+                socket_addr: address,
+                protocol: hickory_resolver::config::Protocol::Udp,
+                tls_dns_name: None,
+                trust_negative_responses: true,
+            });
         }
-        Ok(resolver)
+
+        Ok(TokioAsyncResolver::tokio(config, resolver_opts))
     }
 }
 
@@ -174,17 +170,17 @@ where
 {
     vec![
         DNSSource::source(
-            Some(String::from("resolver1.opendns.com")),
+            String::from("resolver1.opendns.com"),
             QueryType::A,
             "myip.opendns.com",
         ),
         DNSSource::source(
-            Some(String::from("resolver1.opendns.com")),
+            String::from("resolver1.opendns.com"),
             QueryType::AAAA,
             "myip.opendns.com",
         ),
         DNSSource::source(
-            Some(String::from("ns1.google.com")),
+            String::from("ns1.google.com"),
             QueryType::TXT,
             "o-o.myaddr.l.google.com",
         ),
