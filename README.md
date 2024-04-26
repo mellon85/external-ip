@@ -38,19 +38,15 @@ For ease of use a single async function is enough to obtain the IP trying with
 all the default sources enabled
 
 ```rust
-  let result = external_ip::get_ip();
+  let result = external_ip::get_ipv4();
   let value : Option<IpAddr> = block_on(result);
+
 ```
 
-This is the same as doing
-
 ```rust
-  let sources: external_ip::Sources = external_ip::get_sources();
-  let consensus = external_ip::ConsensusBuilder::new()
-      .add_sources(sources)
-      .build();
-  let result = consensus.get_consensus();
-  let value : Option<IpAddr>  = block_on(result);
+  let result = external_ip::get_ipv6();
+  let value : Option<IpAddr> = block_on(result);
+
 ```
 
 # Policies
@@ -93,3 +89,4 @@ It's possible to select a specific address family to resolve to and all resolver
 
 - Added ip family selection option
 - Support http sources with IPv6
+- Updated http and dns sources
