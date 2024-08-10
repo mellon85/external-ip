@@ -110,6 +110,7 @@ where
         ("https://api.ipify.org", Family::IPv4),
         ("https://ifconfig.me/ip", Family::Any),
         ("https://ipinfo.io/ip", Family::IPv4),
+        ("https://ip2location.io/ip", Family::Any),
     ]
     .iter()
     .cloned()
