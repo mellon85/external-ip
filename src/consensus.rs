@@ -1,7 +1,7 @@
 use crate::sources;
 
 use log::{debug, error};
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::option::Option;
@@ -141,8 +141,8 @@ impl Consensus {
     }
 
     async fn random(&self) -> Option<IpAddr> {
-        let mut rng = rand::thread_rng();
-        for voter in self.voters.choose_multiple(&mut rng, self.voters.len()) {
+        let mut rng = rand::rng();
+        for voter in self.voters.choose(&mut rng) {
             let result = voter.get_ip(self.family).await;
             debug!("Results {:?}", result);
             if result.is_ok() {
