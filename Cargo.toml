@@ -17,7 +17,7 @@ log = "0.4"
 hickory-resolver = "0.24"
 igd = { version = "0.12", optional = true }
 rand = "0.8"
-thiserror = "1.0.58"
+thiserror = "2.0.11"
 
 [dev-dependencies]
 tokio-test = "0.4"
