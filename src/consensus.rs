@@ -1,7 +1,6 @@
 use crate::sources;
 
 use log::{debug, error};
-use rand::seq::IndexedRandom;
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::option::Option;
@@ -19,14 +18,11 @@ use std::default::Default;
 pub enum Policy {
     /// Requires all sources to be queried, it will ignore the sources returning errors but and it
     /// will return the IP with the most replies as the result.
+    #[default]
     All,
     /// Will test the sources one by one in order until there's one success and will return it as
     /// the result.
     First,
-    /// Will test the sources one by one in random order until there's one success and will return
-    /// it as the result.
-    #[default]
-    Random,
 }
 
 /// Consensus system that aggregates the various sources of information and returns the most common
@@ -98,7 +94,6 @@ impl Consensus {
         match self.policy {
             Policy::All => self.all().await,
             Policy::First => self.first().await,
-            Policy::Random => self.random().await,
         }
     }
 
@@ -130,19 +125,6 @@ impl Consensus {
 
     async fn first(&self) -> Option<IpAddr> {
         for voter in &self.voters {
-            let result = voter.get_ip(self.family).await;
-            debug!("Results {:?}", result);
-            if result.is_ok() {
-                return result.ok();
-            }
-        }
-        debug!("Tried all sources");
-        None
-    }
-
-    async fn random(&self) -> Option<IpAddr> {
-        let mut rng = rand::rng();
-        for voter in self.voters.choose(&mut rng) {
             let result = voter.get_ip(self.family).await;
             debug!("Results {:?}", result);
             if result.is_ok() {
@@ -245,7 +227,7 @@ mod tests {
 
     #[test]
     fn test_only_failures() {
-        for policy in [Policy::All, Policy::Random, Policy::First].iter() {
+        for policy in [Policy::All, Policy::First].iter() {
             let consensus = ConsensusBuilder::new()
                 .add_sources(vec![make_fail()])
                 .policy(*policy)
