@@ -119,25 +119,15 @@ impl Source for DNSSource {
                     for reply in resolver.txt_lookup(_self.record.clone()).await?.answers() {
                         if let RData::TXT(txt) = &reply.data {
                             for txt in txt.txt_data.iter() {
-                                let data = std::str::from_utf8(txt);
-                                if data.is_err() {
-                                    continue;
-                                }
-
-                                let ip = data.unwrap().parse()?;
-                                if family == Family::Any {
-                                    return Ok(ip);
-                                } else if family == Family::IPv4 {
-                                    if ip.is_ipv4() {
+                                if let Ok(data) = std::str::from_utf8(txt) {
+                                    let ip: std::net::IpAddr = data.parse()?;
+                                    if family == Family::Any {
+                                        return Ok(ip);
+                                    } else if family == Family::IPv4 && ip.is_ipv4() {
+                                        return Ok(ip);
+                                    } else if family == Family::IPv6 && ip.is_ipv6() {
                                         return Ok(ip);
                                     }
-                                    return Err(Error::DnsResolutionEmpty);
-                                } else {
-                                    // if family == Family::IPv6
-                                    if ip.is_ipv6() {
-                                        return Ok(ip);
-                                    }
-                                    return Err(Error::UnsupportedFamily);
                                 }
                             }
                         }
