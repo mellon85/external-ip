@@ -24,7 +24,7 @@ pub enum Error {
     #[error("Address parsing: {0}")]
     InvalidAddress(#[from] std::net::AddrParseError),
     #[error("DNS resolution failed: {0}")]
-    Dns(#[from] hickory_resolver::error::ResolveError),
+    Dns(#[from] hickory_resolver::net::NetError),
     #[error("DNS resolution empty")]
     DnsResolutionEmpty,
     #[error("Unsupported family")]

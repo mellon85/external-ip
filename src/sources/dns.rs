@@ -1,10 +1,10 @@
 use crate::sources::interfaces::{Error, Family, IpFuture, IpResult, Source};
 use log::trace;
 
-use std::net::SocketAddr;
-
 use hickory_resolver::config::*;
-use hickory_resolver::TokioAsyncResolver;
+use hickory_resolver::net::runtime::TokioRuntimeProvider;
+use hickory_resolver::proto::rr::RData;
+use hickory_resolver::TokioResolver;
 
 #[derive(Debug, Clone, Copy)]
 pub enum QueryType {
@@ -61,7 +61,7 @@ impl std::fmt::Display for DNSSource {
 }
 
 impl DNSSource {
-    async fn get_resolver(self: &DNSSource, family: Family) -> Result<TokioAsyncResolver, Error> {
+    async fn get_resolver(self: &DNSSource, family: Family) -> Result<TokioResolver, Error> {
         let mut resolver_opts = ResolverOpts::default();
         resolver_opts.ip_strategy = match family {
             Family::IPv4 => LookupIpStrategy::Ipv4Only,
@@ -69,21 +69,26 @@ impl DNSSource {
             Family::Any => resolver_opts.ip_strategy,
         };
 
-        let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), resolver_opts.clone());
-        let mut config = ResolverConfig::new();
+        trace!("Bootstrapping resolver for {} with strategy {:?}", self.server, resolver_opts.ip_strategy);
+        let mut builder = TokioResolver::builder_with_config(
+            ResolverConfig::udp_and_tcp(&GOOGLE),
+            TokioRuntimeProvider::default(),
+        );
+        *builder.options_mut() = resolver_opts.clone();
+        let resolver = builder.build()?;
+
+        let mut name_servers = Vec::new();
         for found_ip in resolver.lookup_ip(&self.server).await?.iter() {
-            let address = SocketAddr::new(found_ip, 53);
-            trace!("DNS address {}", address);
-            config.add_name_server(NameServerConfig {
-                bind_addr: None,
-                socket_addr: address,
-                protocol: hickory_resolver::config::Protocol::Udp,
-                tls_dns_name: None,
-                trust_negative_responses: true,
-            });
+            trace!("DNS address {}", found_ip);
+            name_servers.push(NameServerConfig::udp(found_ip));
         }
 
-        Ok(TokioAsyncResolver::tokio(config, resolver_opts))
+        let config = ResolverConfig::from_parts(None, Vec::new(), name_servers);
+
+        let mut builder =
+            TokioResolver::builder_with_config(config, TokioRuntimeProvider::default());
+        *builder.options_mut() = resolver_opts;
+        Ok(builder.build()?)
     }
 }
 
@@ -97,7 +102,7 @@ impl Source for DNSSource {
                 return Err(Error::UnsupportedFamily);
             }
             trace!("Contacting {:?} for {}", _self.server, _self.record);
-            let resolver = _self
+            let resolver: TokioResolver = _self
                 .get_resolver(match _self.record_type {
                     QueryType::A => Family::IPv4,
                     QueryType::AAAA => Family::IPv6,
@@ -107,27 +112,29 @@ impl Source for DNSSource {
 
             match _self.record_type {
                 QueryType::TXT => {
-                    for reply in resolver.txt_lookup(_self.record.clone()).await?.iter() {
-                        for txt in reply.txt_data().iter() {
-                            let data = std::str::from_utf8(txt);
-                            if data.is_err() {
-                                continue;
-                            }
+                    for reply in resolver.txt_lookup(_self.record.clone()).await?.answers() {
+                        if let RData::TXT(txt) = &reply.data {
+                            for txt in txt.txt_data.iter() {
+                                let data = std::str::from_utf8(txt);
+                                if data.is_err() {
+                                    continue;
+                                }
 
-                            let ip = data.unwrap().parse()?;
-                            if family == Family::Any {
-                                return Ok(ip);
-                            } else if family == Family::IPv4 {
-                                if ip.is_ipv4() {
+                                let ip = data.unwrap().parse()?;
+                                if family == Family::Any {
                                     return Ok(ip);
+                                } else if family == Family::IPv4 {
+                                    if ip.is_ipv4() {
+                                        return Ok(ip);
+                                    }
+                                    return Err(Error::DnsResolutionEmpty);
+                                } else {
+                                    // if family == Family::IPv6
+                                    if ip.is_ipv6() {
+                                        return Ok(ip);
+                                    }
+                                    return Err(Error::UnsupportedFamily);
                                 }
-                                return Err(Error::DnsResolutionEmpty);
-                            } else {
-                                // if family == Family::IPv6
-                                if ip.is_ipv6() {
-                                    return Ok(ip);
-                                }
-                                return Err(Error::UnsupportedFamily);
                             }
                         }
                     }

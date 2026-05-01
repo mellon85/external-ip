@@ -12,15 +12,16 @@ Asynchronous library to retrieve the system external IP
 
 [dependencies]
 futures = "0.3"
-reqwest = {version = "0.12" }
+reqwest = {version = "0.13" }
 log = "0.4"
-hickory-resolver = "0.24"
-igd = { version = "0.12", optional = true }
+hickory-resolver = "0.26"
+igd = { version = "0.12.1", optional = true }
 thiserror = "2"
 
 [dev-dependencies]
 tokio-test = "0.4"
-mockall = "0.13"
+mockall = "0.14"
+env_logger = "0.11"
 
 [features]
 default = ["discover_igd"]
