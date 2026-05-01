@@ -90,3 +90,13 @@ It's possible to select a specific address family to resolve to and all resolver
 - Added ip family selection option
 - Support http sources with IPv6
 - Updated http and dns sources
+
+## v6
+
+- Improved random selector
+- Updated dependencies (rand 0.9, thiserror 2)
+
+## v7
+
+- Updated dependencies (hickory-resolver 0.26)
+- Changed Rust edition to 2024
