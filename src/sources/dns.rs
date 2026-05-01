@@ -1,10 +1,10 @@
 use crate::sources::interfaces::{Error, Family, IpFuture, IpResult, Source};
 use log::trace;
 
+use hickory_resolver::TokioResolver;
 use hickory_resolver::config::*;
 use hickory_resolver::net::runtime::TokioRuntimeProvider;
 use hickory_resolver::proto::rr::RData;
-use hickory_resolver::TokioResolver;
 
 #[derive(Debug, Clone, Copy)]
 pub enum QueryType {
@@ -71,8 +71,7 @@ impl DNSSource {
 
         trace!(
             "Bootstrapping resolver for {} with strategy {:?}",
-            self.server,
-            resolver_opts.ip_strategy
+            self.server, resolver_opts.ip_strategy
         );
         let mut builder = TokioResolver::builder_with_config(
             ResolverConfig::udp_and_tcp(&GOOGLE),
@@ -121,11 +120,10 @@ impl Source for DNSSource {
                             for txt in txt.txt_data.iter() {
                                 if let Ok(data) = std::str::from_utf8(txt) {
                                     let ip: std::net::IpAddr = data.parse()?;
-                                    if family == Family::Any {
-                                        return Ok(ip);
-                                    } else if family == Family::IPv4 && ip.is_ipv4() {
-                                        return Ok(ip);
-                                    } else if family == Family::IPv6 && ip.is_ipv6() {
+                                    if family == Family::Any
+                                        || (family == Family::IPv4 && ip.is_ipv4())
+                                        || (family == Family::IPv6 && ip.is_ipv6())
+                                    {
                                         return Ok(ip);
                                     }
                                 }
