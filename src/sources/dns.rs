@@ -69,7 +69,11 @@ impl DNSSource {
             Family::Any => resolver_opts.ip_strategy,
         };
 
-        trace!("Bootstrapping resolver for {} with strategy {:?}", self.server, resolver_opts.ip_strategy);
+        trace!(
+            "Bootstrapping resolver for {} with strategy {:?}",
+            self.server,
+            resolver_opts.ip_strategy
+        );
         let mut builder = TokioResolver::builder_with_config(
             ResolverConfig::udp_and_tcp(&GOOGLE),
             TokioRuntimeProvider::default(),
